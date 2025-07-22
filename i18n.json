@@ -10,5 +10,13 @@
   "fr": {
     "source": "Source",
     "install": "Installez ce bot sur votre serveur"
+  },
+  "ro": {
+    "source": "Sursă",
+    "install": "Instalați acest bot pe serverul dvs."
+  },
+  "de": {
+    "source": "Quelle",
+    "install": "Installieren Sie diesen Bot auf Ihrem Server"
   }
 }

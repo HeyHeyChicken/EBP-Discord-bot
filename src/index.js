@@ -20,7 +20,7 @@ const API_URL = "https://evabattleplan.com/back/api-discord/?route="; // URL de 
 
 let weapons; // Ici sera stockée la liste des armes provenant de l'API.
 let weaponsUrls; // Ici sera stockée la liste des URL de la page "Armes".
-const LANGUAGES = ["en", "fr", "es", "de"]; // Le bot ne travaillera que sur les channels qui contiennent l'élément 0. L'élément 1 représente la langue devinée du channel.
+const LANGUAGES = ["en", "fr", "es", "de", "ro"]; // Le bot ne travaillera que sur les channels qui contiennent l'élément 0. L'élément 1 représente la langue devinée du channel.
 const SETTINGS = new Settings();
 const DISCORD = new Discord(DEV_MODE);
 const DATABASE = new Database(API_URL);
