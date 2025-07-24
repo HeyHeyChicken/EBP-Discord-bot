@@ -20,10 +20,11 @@
 2. Click on the "Authorize" button.
 3. Create a channel and add one of these tags in it's topic:
 
-- <img width="20px" src="https://evabattleplan.com/back/wp-content/uploads/en.png"> #EBP_WEAPONS_BOT(en)
-- <img width="20px" src="https://evabattleplan.com/back/wp-content/uploads/fr.png"> #EBP_WEAPONS_BOT(fr)
-- <img width="20px" src="https://evabattleplan.com/back/wp-content/uploads/es.png"> #EBP_WEAPONS_BOT(es)
-- <img width="20px" src="https://evabattleplan.com/back/wp-content/uploads/de.png"> #EBP_WEAPONS_BOT(de)
+- <img width="20px" src="https://evabattleplan.com/assets/img/flags/en.webp"> #EBP_WEAPONS_BOT(en)
+- <img width="20px" src="https://evabattleplan.com/assets/img/flags/fr.webp"> #EBP_WEAPONS_BOT(fr)
+- <img width="20px" src="https://evabattleplan.com/assets/img/flags/es.webp"> #EBP_WEAPONS_BOT(es)
+- <img width="20px" src="https://evabattleplan.com/assets/img/flags/de.webp"> #EBP_WEAPONS_BOT(de)
+- <img width="20px" src="https://evabattleplan.com/assets/img/flags/ro.webp"> #EBP_WEAPONS_BOT(ro)
 
 4. Click on the cog of this channel.
 5. In the "Permission" tab, in the "Advanced permissions" section, remove all permissions and add this specific permissions to "@everyone" users :
