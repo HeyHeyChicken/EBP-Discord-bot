@@ -317,6 +317,7 @@ DISCORD.client.on("messageCreate", async (message) => {
               channel.topic && channel.topic.includes("#EBP_WEAPONS_BOT(")
           );
           if (CHANNELS.length > 0) {
+            console.log(`Il y a ${CHANNELS.length} salons d'armes dans ce serveur.`);
             const MESSAGES = await DISCORD.getOldMessages(CHANNELS[0]);
             for (let message of MESSAGES) {
               await DISCORD.deleteMessage(message);
