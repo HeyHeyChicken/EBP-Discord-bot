@@ -1,13 +1,13 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/HeyHeyChicken/BattlePlan-Discord-weapons-bot/refs/heads/main/.github/logo.png" alt="EBP's Discord weapons bot" width="300">
+<img src="https://raw.githubusercontent.com/HeyHeyChicken/EBP-Discord-weapons-bot/refs/heads/main/.github/logo.png" alt="EBP's Discord weapons bot" width="300">
 <br><br>
 
 **EBP's Discord weapons bot** is an open-source bot that will automatically update the characteristics of EVA weapons on your Discord server.<br>
 
 [![Discord](https://discord-weapons-bot.ebp.gg/)](https://discord-weapons-bot.ebp.gg/)
 
-<img width="410px" src="https://raw.githubusercontent.com/HeyHeyChicken/BattlePlan-Discord-weapons-bot/refs/heads/main/.github/screenshot.jpg">
+<img width="410px" src="https://raw.githubusercontent.com/HeyHeyChicken/EBP-Discord-weapons-bot/refs/heads/main/.github/screenshot.jpg">
 </div>
 
 ## 👋 Introduction

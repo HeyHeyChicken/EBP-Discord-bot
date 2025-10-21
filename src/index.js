@@ -211,7 +211,7 @@ async function refresh(server) {
               "\n" +
               i18n("install", LANGUAGE) +
               ": " +
-              `<https://github.com/HeyHeyChicken/BattlePlan-Discord-weapons-bot>`,
+              `<https://github.com/HeyHeyChicken/EBP-Discord-weapons-bot>`,
           });
         } catch (e) {
           console.error(

@@ -18,21 +18,21 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /usr/src/app
 
 # Cloner le dépôt
-RUN git clone https://github.com/HeyHeyChicken/BattlePlan-Discord-weapons-bot.git
+RUN git clone https://github.com/HeyHeyChicken/EBP-Discord-weapons-bot.git
 
 # Installer les dépendances
-WORKDIR /usr/src/app/BattlePlan-Discord-weapons-bot
+WORKDIR /usr/src/app/EBP-Discord-weapons-bot
 RUN npm install
 
 # Fixer les autorisations pour Chromium
-RUN chmod -R o+rx /usr/src/app/BattlePlan-Discord-weapons-bot/node_modules/
+RUN chmod -R o+rx /usr/src/app/EBP-Discord-weapons-bot/node_modules/
 
 # Partager le fichier settings.json
-COPY settings.json /usr/src/app/BattlePlan-Discord-weapons-bot/settings.json
+COPY settings.json /usr/src/app/EBP-Discord-weapons-bot/settings.json
 
 # Expose le port si nécessaire (par exemple, 3000)
 EXPOSE 3000
 
 # Commande pour démarrer l'application
-WORKDIR /usr/src/app/BattlePlan-Discord-weapons-bot/src
+WORKDIR /usr/src/app/EBP-Discord-weapons-bot/src
 CMD ["node", "index.js"]
