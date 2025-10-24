@@ -118,7 +118,7 @@ async function refresh(server) {
         const DATE_STRING =
           ("0" + DATE.getDate()).slice(-2) +
           "/" +
-          ("0" + DATE.getMonth() + 1).slice(-2) +
+          ("0" + (DATE.getMonth() + 1)).slice(-2) +
           "/" +
           DATE.getFullYear() +
           " " +
