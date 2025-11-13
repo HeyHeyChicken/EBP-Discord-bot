@@ -22,14 +22,14 @@ class Screenshoter {
   prepare_urls(weapons, weaponsUrls, languages) {
     // On prépare la liste des URLs à scanner pour créer les screenshots de chaque armes, pour chaque langues.
     const SCREENSHOT_URLS = [];
-    for (const language of languages) {
+    for (const LANGUAGE of languages) {
       for (let weapon of weapons) {
         SCREENSHOT_URLS.push([
           PATH.join(
             this.screenshotsFolder,
-            (language + "_" + weapon.name).toUpperCase() + ".png"
+            (LANGUAGE + "_" + weapon.name).toUpperCase() + ".png"
           ),
-          weaponsUrls[language] +
+          weaponsUrls[LANGUAGE] +
             "/" +
             weapon.name.toLowerCase().replaceAll(" ", "-") +
             "?discord=1",
@@ -66,7 +66,8 @@ class Screenshoter {
         .find((channel) => channel.id == this._discord.ebpDevChannelId);
       if (DISCORD_CHANNEL) {
         const OLD_DEV_MESSAGES = await this._discord.getOldMessages(
-          DISCORD_CHANNEL
+          DISCORD_CHANNEL,
+          200
         );
 
         const SCREEN_WIDTH = 1920 * 0.9;

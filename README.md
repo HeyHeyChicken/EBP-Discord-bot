@@ -38,7 +38,7 @@
    - Attach files
    - Manage messages
    - View old messages
-7. Use this command to refresh weapons for the first time: `!ebp_refresh`.
+7. Use this command to refresh weapons for the first time: `/ebp_refresh`.
 
 <br>
 <br>

@@ -58,18 +58,41 @@ class Discord {
    */
   async getOldMessages(channel, limit = 100) {
     console.log(`                Trying to get old messages...`);
-    let oldMessages = [];
+    let allMessages = [];
+
     try {
-      oldMessages = await channel.messages.fetch({ limit: limit }); // On récupère les anciens messages envoyés sur le channel.
+      let lastMessageId = null;
+      let remaining = limit;
+
+      while (remaining > 0) {
+        const FETCH_LIMIT = Math.min(remaining, 100); // Max 100 par requête
+        const OPTIONS = { limit: FETCH_LIMIT };
+
+        if (lastMessageId) {
+          OPTIONS.before = lastMessageId;
+        }
+
+        const MESSAGES = await channel.messages.fetch(OPTIONS);
+
+        if (MESSAGES.size === 0) {
+          break; // Plus de messages disponibles
+        }
+
+        const MESSAGES_ARRAY = Array.from(MESSAGES.values());
+        allMessages.push(...MESSAGES_ARRAY);
+
+        lastMessageId = MESSAGES_ARRAY[MESSAGES_ARRAY.length - 1].id;
+        remaining -= MESSAGES.size;
+      }
     } catch (e) {
       console.error(
         `        Unable to access messages (Channel: "${channel.name}").`,
         e
       );
     }
-    const BACK = Array.from(oldMessages).map((x) => x[1]);
-    console.log(`                Got old messages (${BACK.length})`);
-    return BACK;
+
+    console.log(`                Got old messages (${allMessages.length})`);
+    return allMessages;
   }
 
   //#endregion
