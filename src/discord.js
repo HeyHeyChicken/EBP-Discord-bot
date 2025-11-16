@@ -1,16 +1,25 @@
+// Copyright (c) 2025, Antoine Duval
+// This file is part of a source-visible project.
+// See LICENSE for terms. Unauthorized use is prohibited.
+
 //#region Imports
 
-const { Client, GatewayIntentBits } = require("discord.js"); // Cette librairie me permet de communiquer avec l'API de Discord.
+const {
+  Client,
+  GatewayIntentBits,
+  ChannelType,
+  PermissionFlagsBits,
+} = require("discord.js"); // This library allows communication with the Discord API.
 
 //#endregion
 
 /**
- * Cette classe a pour but de télécharger les screenshots des armes dans toutes les langues.
+ * This class aims to upload screenshots of weapons in all languages.
  */
 class Discord {
   constructor(devMode) {
-    this.ebpServerId = 1113942572818255992; /* ID du serveur d'EBP */
-    this.ebpDevChannelId = 1296730928588132394; /* ID du salon dédié à l'upload des images */
+    this.ebpServerId = 1113942572818255992; /* EBP server ID */
+    this.ebpDevChannelId = 1296730928588132394; /* ID of the chat room dedicated to uploading images. */
 
     this._devMode = devMode;
     this.client = new Client({
@@ -25,36 +34,36 @@ class Discord {
   //#region GETTERS
 
   /**
-   * Cette fonction retourne la liste des serveurs qui utilisent le bot.
-   * @returns Liste de serveurs qui utilisent le bot.
+   * This function returns the list of servers that use the bot.
+   * @returns List of servers that use the bot.
    */
   _getServers() {
     return Array.from(this.client.guilds.cache).map((server) => server[1]);
   }
 
   /**
-   * Cette fonction retourne la liste des salons d'un serveur.
-   * @param {*} server Serveur à analyser.
-   * @returns Liste des salons d'un serveur.
+   * This function returns the list of rooms on a server.
+   * @param {*} server Server to analyze.
+   * @returns List of rooms on a server.
    */
   _getServerChannels(server) {
     return Array.from(server.channels.cache).map((channel) => channel[1]);
   }
 
   /**
-   * Cette fonction retourne le serveur à qui appartien le salon.
-   * @param {*} channel Salon.
-   * @returns Serveur à qui appartien le salon.
+   * This function returns the server to which the room belongs.
+   * @param {*} channel Channel.
+   * @returns Server who owns the chat room.
    */
   _getChannelServer(channel) {
     return this._getServers().find((server) => server.id == channel.guild.id);
   }
 
   /**
-   * Cette fonction retourne les anciens messages d'un salon.
-   * @param {*} channel Salon à analyser.
-   * @param {*} limit Nombre de messages maximim à récupérer.
-   * @returns Liste de messages du salon.
+   * This function returns the old messages from a chat room.
+   * @param {*} channel Trade show to analyze.
+   * @param {*} limit Maximum number of messages to retrieve.
+   * @returns List of messages from the chat room.
    */
   async getOldMessages(channel, limit = 100) {
     console.log(`                Trying to get old messages...`);
@@ -65,7 +74,7 @@ class Discord {
       let remaining = limit;
 
       while (remaining > 0) {
-        const FETCH_LIMIT = Math.min(remaining, 100); // Max 100 par requête
+        const FETCH_LIMIT = Math.min(remaining, 100); // Maximum 100 per request.
         const OPTIONS = { limit: FETCH_LIMIT };
 
         if (lastMessageId) {
@@ -75,7 +84,7 @@ class Discord {
         const MESSAGES = await channel.messages.fetch(OPTIONS);
 
         if (MESSAGES.size === 0) {
-          break; // Plus de messages disponibles
+          break; // More messages available.
         }
 
         const MESSAGES_ARRAY = Array.from(MESSAGES.values());
@@ -161,6 +170,11 @@ class Discord {
 
   //#endregion
 
+  /**
+   * Delete a Discord message.
+   * @param {Object} message - The Discord message object to delete.
+   * @param {Function} [callback] - Optional callback function to execute with success/failure status.
+   */
   async deleteMessage(message, callback) {
     try {
       await message.delete();
@@ -173,7 +187,7 @@ class Discord {
         (x) => x.id == message.channelId
       );
       console.error(
-        `        Impossible de supprimer le messages (Server: "${SERVER.name}", channel: "${CHANNEL.name}").`,
+        `        Unable to delete the message (Server: "${SERVER.name}", channel: "${CHANNEL.name}").`,
         e
       );
       if (callback) {
@@ -182,6 +196,13 @@ class Discord {
     }
   }
 
+  /**
+   * Delete old weapon messages that don't match the current date.
+   * @param {Array} oldMessages - Array of old Discord messages to filter through.
+   * @param {string} weaponName - The name of the weapon.
+   * @param {string} weaponDate - The date of the weapon.
+   * @returns {Promise<boolean>} Returns true if a new message can be created, false otherwise.
+   */
   async deleteWeaponMessage(oldMessages, weaponName, weaponDate) {
     const A_WEAPON_OLD_MESSAGES = oldMessages.filter((message) =>
       message.content.startsWith(weaponName + "\n")
@@ -203,9 +224,48 @@ class Discord {
   }
 
   /**
-   * Cette fonction permet d'attentre.
-   * @param {*} time Temps en millisecondes.
-   * @returns
+   * Create a new Discord channel in a server.
+   * @param {Object} server - The Discord server object.
+   * @param {string} name - The name of the channel to create.
+   * @param {string} topic - The topic/description of the channel.
+   * @param {Function} [callback] - Optional callback function to execute with the created channel.
+   */
+  async createChannel(server, name, topic, callback) {
+    try {
+      const SERVER = await server.channels.create({
+        name: name,
+        topic: topic,
+        type: ChannelType.GuildText,
+        permissionOverwrites: [
+          {
+            id: this.client.user.id, // Bot permissions
+            allow: [PermissionFlagsBits.SendMessages],
+          },
+          {
+            id: server.roles.everyone.id, // @everyone
+            deny: [
+              PermissionFlagsBits.SendMessages,
+              PermissionFlagsBits.CreatePublicThreads,
+              PermissionFlagsBits.CreatePrivateThreads,
+              PermissionFlagsBits.SendMessagesInThreads,
+            ],
+          },
+        ],
+      });
+      if (callback) {
+        callback(SERVER);
+      }
+    } catch (e) {
+      console.error(
+        `        Unable to create the room on the server "${server.name}".`,
+        e
+      );
+    }
+  }
+
+  /**
+   * This function allows for waiting.
+   * @param {*} time Time in milliseconds.
    */
   async _delay(time) {
     return new Promise(function (resolve) {

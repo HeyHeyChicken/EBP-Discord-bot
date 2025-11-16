@@ -1,30 +1,51 @@
+// Copyright (c) 2025, Antoine Duval
+// This file is part of a source-visible project.
+// See LICENSE for terms. Unauthorized use is prohibited.
+
 //#region Imports
 
 const AXIOS = require("axios"); // This library allows me to query the REST API of EBP - EVA Battle Plan.
 const PATH = require("path"); // This library allows me to create OS-related access paths.
 const HTTP = require("http");
 const FS = require("fs");
-const { EmbedBuilder } = require("discord.js"); // This library allows me to communicate with the Discord API.
-
-const Screenshoter = require("./screenshoter");
 const Settings = require("./settings");
-const Database = require("./database");
 const Discord = require("./discord");
+const DatabaseService = require("./services/DatabaseService");
+const ScreenshotService = require("./services/ScreenshotService");
+
+const WeaponManager = require("././managers/WeaponManager");
+const ModeManager = require("././managers/ModeManager");
 
 //#endregion
 
 //#region Variables
 
 const DEV_MODE = process.argv.slice(2)[0] == "true";
-const API_URL = "https://evabattleplan.com/back/api-discord/?route="; // EBP REST API URL - EVA Battle Plan.
+const EBP_DOMAIN = "https://evabattleplan.com";
+const API_URL = EBP_DOMAIN + "/back/api-discord/?route="; // EBP REST API URL - EVA Battle Plan.
 
 let weapons; // The list of weapons from the API will be stored here.
 let weaponsUrls; // The list of URLs for the "Weapons" page will be stored here.
-const LANGUAGES = ["en", "fr", "es", "de", "ro"]; // The bot will only work on channels that contain the element 0. The element 1 represents the guessed language of the channel.
+
+let modes; // The list of modes from the API will be stored here.
+let modesUrls; // The list of URLs for the "Heroes" page will be stored here.
+
 const SETTINGS = new Settings();
 const DISCORD = new Discord(DEV_MODE);
-const DATABASE = new Database(API_URL);
-const SCREENSHOTER = new Screenshoter(DISCORD, DATABASE);
+const DATABASE = new DatabaseService(API_URL);
+const SCREENSHOT_SERVICE = new ScreenshotService();
+const WEAPON_MANAGER = new WeaponManager(
+  DISCORD,
+  DATABASE,
+  SCREENSHOT_SERVICE,
+  EBP_DOMAIN
+);
+const MODE_MANAGER = new ModeManager(
+  DISCORD,
+  DATABASE,
+  SCREENSHOT_SERVICE,
+  EBP_DOMAIN
+);
 const WEB_PORT = DEV_MODE ? 3001 : 3000;
 const I18N = JSON.parse(
   FS.readFileSync(PATH.join(__dirname, "..", "i18n.json"), "utf8")
@@ -72,162 +93,6 @@ SERVER.listen(WEB_PORT, () => {
 
 //#endregion
 
-function embedBuilder(weaponName, weaponDate, imageURL, weaponURL) {
-  return new EmbedBuilder()
-    .setTitle(weaponName.toUpperCase())
-    .setURL(weaponURL)
-    .setImage(imageURL)
-    .setFooter({
-      text: weaponDate,
-    })
-    .setColor("#313338");
-}
-
-/**
- * This function refreshes weapon information on a server.
- * @param {*} server Server needs refreshing.
- */
-async function refresh(server) {
-  console.log(`        Server: "${server.name}"`);
-  // We retrieve the channels that want to contain the images.
-  const WEAPONS_CHANNELS = DISCORD._getServerChannels(server).filter(
-    (channel) => channel.topic && channel.topic.includes("#EBP_WEAPONS_BOT(")
-  );
-
-  if (WEAPONS_CHANNELS.length) {
-    for (const CHANNEL of WEAPONS_CHANNELS) {
-      const LANGUAGE = CHANNEL.topic
-        .split("#EBP_WEAPONS_BOT(")
-        .at(-1)
-        .slice(0, 2)
-        .toLowerCase();
-
-      console.log(`            Channel: "${CHANNEL.name}"`);
-      let OLD_MESSAGES = await DISCORD.getOldMessages(CHANNEL);
-
-      // We filter out old messages to keep only those sent by the bot.
-      const OLD_BOT_MESSAGES = OLD_MESSAGES.filter(
-        (x) =>
-          x.author.bot &&
-          x.author.username == DISCORD.client.user.username &&
-          x.author.discriminator == DISCORD.client.user.discriminator
-      );
-      let nbMessageSend = 0; // This variable represents the number of messages sent on the channel.
-
-      for (const WEAPON of weapons) {
-        const DATE = new Date(WEAPON.date);
-        const DATE_STRING =
-          ("0" + DATE.getDate()).slice(-2) +
-          "/" +
-          ("0" + (DATE.getMonth() + 1)).slice(-2) +
-          "/" +
-          DATE.getFullYear() +
-          " " +
-          ("0" + DATE.getHours()).slice(-2) +
-          ":" +
-          ("0" + DATE.getMinutes()).slice(-2);
-        let allowAddNewWeapon = true;
-
-        const OLD_BOT_MESSAGE = OLD_BOT_MESSAGES.find(
-          (message) =>
-            message.embeds[0] &&
-            message.embeds[0].title == WEAPON.name.toUpperCase()
-        ); // We are looking for an old message related to this weapon.
-
-        const IMAGE = await DATABASE.selectImage(WEAPON.name, LANGUAGE);
-        if (IMAGE) {
-          if (OLD_BOT_MESSAGE) {
-            allowAddNewWeapon = false;
-            if (OLD_BOT_MESSAGE.embeds[0]) {
-              const OLD_DATE_STRING = OLD_BOT_MESSAGE.embeds[0].footer.text;
-              // We check that the weapon data is up to date on this channel.
-              if (DATE_STRING != OLD_DATE_STRING) {
-                try {
-                  await await OLD_BOT_MESSAGE.edit({
-                    embeds: [
-                      embedBuilder(
-                        WEAPON.name,
-                        DATE_STRING,
-                        IMAGE.url,
-                        weaponsUrls[LANGUAGE] + "/" + encodeURI(WEAPON.name)
-                      ),
-                    ],
-                  });
-                } catch (e) {
-                  console.error(
-                    `        Unable to modify the message (Server: "${server.name}", channel: "${CHANNEL.name}").`,
-                    e
-                  );
-                }
-              }
-            }
-          }
-          if (allowAddNewWeapon) {
-            // We send a message containing the latest information about the weapon.
-
-            if (
-              await DISCORD.sendMessage(
-                CHANNEL,
-                "",
-                embedBuilder(
-                  WEAPON.name,
-                  DATE_STRING,
-                  IMAGE.url,
-                  weaponsUrls[LANGUAGE] + "/" + encodeURI(WEAPON.name)
-                )
-              )
-            ) {
-              nbMessageSend++;
-            }
-          }
-        } else {
-          console.error(
-            `Can't find image (Weapon: "${WEAPON.name}", language: "${LANGUAGE}").`
-          );
-        }
-      }
-
-      // The final message is sent.
-      const OLD_FINAL = OLD_BOT_MESSAGES.filter((x) =>
-        x.content.startsWith("─────────────")
-      );
-      if (nbMessageSend > 0 || OLD_FINAL.length == 0) {
-        OLD_FINAL.forEach((message) => {
-          try {
-            message.delete();
-          } catch (e) {
-            console.error(
-              `        Unable to delete the message (Server: "${server.name}", channel: "${CHANNEL.name}").`,
-              e
-            );
-          }
-        });
-        try {
-          await CHANNEL.send({
-            content:
-              "───────────────────────────────────\n" +
-              i18n("source", LANGUAGE) +
-              ": " +
-              `<${weaponsUrls[LANGUAGE]}>` +
-              "\n" +
-              i18n("install", LANGUAGE) +
-              ": " +
-              `<https://github.com/HeyHeyChicken/EBP-Discord-weapons-bot>`,
-          });
-        } catch (e) {
-          console.error(
-            `        Unable to send a message (Server: "${server.name}", channel: "${CHANNEL.name}").`,
-            e
-          );
-        }
-      }
-    }
-    console.log("Refresh finnished!");
-  } else {
-    console.error(`No weapon channel found in the "${server.name}" server.`);
-  }
-}
-
 function i18n(path, language) {
   if (!Object.keys(I18N).includes(language)) {
     language = "en";
@@ -235,19 +100,34 @@ function i18n(path, language) {
   return I18N[language][path];
 }
 
-function checkWeaponsDataFromAPI(callback) {
+function checkDataFromAPI(callback) {
   console.log("Refreshing from API...");
-  DATABASE.fetchNewWeapons(async (fetchedWeapons) => {
+  console.log("    Refreshing weapons...");
+  WEAPON_MANAGER.fetchDataFromAPI(async (fetchedWeapons) => {
     weapons = fetchedWeapons;
-    await SCREENSHOTER.download_screenshots(
+    await WEAPON_MANAGER.downloadScreenshots(
       fetchedWeapons,
-      SCREENSHOTER.prepare_urls(fetchedWeapons, weaponsUrls, LANGUAGES)
-    ); // We're downloading the screenshots.
+      weaponsUrls,
+      1920 * 0.9,
+      1080 * 0.9
+    );
+    console.log("    Weapons refreshed.");
 
-    console.log("Refreshed.");
-    if (callback) {
-      callback();
-    }
+    console.log("    Refreshing modes...");
+    MODE_MANAGER.fetchDataFromAPI(async (fetchedModes) => {
+      modes = fetchedModes;
+      await MODE_MANAGER.downloadScreenshots(
+        fetchedModes,
+        modesUrls,
+        1200,
+        800
+      );
+      console.log("    Modes refreshed.");
+
+      if (callback) {
+        callback();
+      }
+    });
   });
 }
 
@@ -256,13 +136,14 @@ function checkWeaponsDataFromAPI(callback) {
  */
 async function loop() {
   console.log("Loop start...");
-  checkWeaponsDataFromAPI(() => {
+  checkDataFromAPI(() => {
     // We're looping through the Discord servers using the bot.
     const SERVERS = DISCORD._getServers();
     console.log(`    There are "${SERVERS.length}" servers using this bot.`);
     for (const SERVER of SERVERS) {
       if (!DEV_MODE || (DEV_MODE && SERVER.name == "EBP - EVA Battle Plan")) {
-        refresh(SERVER);
+        WEAPON_MANAGER.refreshServer(SERVER, weapons, weaponsUrls, i18n);
+        MODE_MANAGER.refreshServer(SERVER, modes, modesUrls, i18n);
       }
     }
     console.log("Loop end.");
@@ -274,13 +155,13 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
   switch (interaction.commandName) {
-    case "ebp_refresh":
-      // Check administrator permissions
+    case "ebp_refresh_server":
+      // Check administrator permissions.
       if (!interaction.member.permissions.has("ADMINISTRATOR")) {
         await interaction.reply({
           content:
             "You must have administrator permissions to use this command.",
-          flags: 64, // MessageFlags.Ephemeral
+          flags: 64, // MessageFlags.Ephemeral.
         });
         return;
       }
@@ -296,16 +177,83 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
 
         await interaction.reply({
           content: "Refreshing...",
-          flags: 64, // MessageFlags.Ephemeral
+          flags: 64, // MessageFlags.Ephemeral.
         });
 
-        refresh(SERVER);
+        WEAPON_MANAGER.refreshServer(SERVER, weapons, weaponsUrls, i18n);
+        MODE_MANAGER.refreshServer(SERVER, modes, modesUrls, i18n);
       } else {
         await interaction.reply({
           content: "Error: Server not found.",
-          flags: 64, // MessageFlags.Ephemeral
+          flags: 64, // MessageFlags.Ephemeral.
         });
       }
+      break;
+    case "ebp_create_channel":
+      // Check administrator permissions.
+      if (!interaction.member.permissions.has("ADMINISTRATOR")) {
+        await interaction.reply({
+          content:
+            "You must have administrator permissions to use this command.",
+          flags: 64, // MessageFlags.Ephemeral.
+        });
+        return;
+      }
+
+      const MODE = interaction.options.getString("mode");
+      const LANGUAGE = interaction.options.getString("language");
+
+      let emoji = "";
+      switch (MODE) {
+        case "weapons":
+          emoji = "🔫";
+        case "modes":
+          emoji = "🚩";
+      }
+
+      DISCORD.createChannel(
+        interaction.guild,
+        `${emoji}${i18n(MODE, LANGUAGE)}`,
+        `#EBP_${MODE.toUpperCase()}_BOT(${LANGUAGE})`,
+        async (channel) => {
+          WEAPON_MANAGER.refreshChannel(channel, weapons, weaponsUrls, i18n);
+          MODE_MANAGER.refreshChannel(channel, modes, modesUrls, i18n);
+
+          await interaction.reply({
+            content: `Salon created : ${channel.name}`,
+            flags: 64, // MessageFlags.Ephemeral.
+          });
+        }
+      );
+
+      break;
+    case "ebp_refresh_channel":
+      // Check administrator permissions.
+      if (!interaction.member.permissions.has("ADMINISTRATOR")) {
+        await interaction.reply({
+          content:
+            "You must have administrator permissions to use this command.",
+          flags: 64, // MessageFlags.Ephemeral.
+        });
+        return;
+      }
+
+      console.log(
+        `"${interaction.user.globalName}" asked for a manual refresh for the: "${interaction.channel.name}" channel.`
+      );
+
+      await interaction.reply({
+        content: "Refreshing...",
+        flags: 64, // MessageFlags.Ephemeral.
+      });
+
+      WEAPON_MANAGER.refreshChannel(
+        interaction.channel,
+        weapons,
+        weaponsUrls,
+        i18n
+      );
+      MODE_MANAGER.refreshChannel(interaction.channel, modes, modesUrls, i18n);
       break;
     case "ebp_admin_list":
       // Verify that this is the bot administrator.
@@ -313,7 +261,7 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
         await interaction.reply({
           content:
             "This command is reserved for the bot administrator (HeyHeyChicken).",
-          flags: 64, // MessageFlags.Ephemeral
+          flags: 64, // MessageFlags.Ephemeral.
         });
         return;
       }
@@ -344,34 +292,34 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
         CHUNKS.push(currentChunk);
       }
 
-      // First message with reply
+      // First message with reply.
       await interaction.reply({
         content: `Server List (${SERVERS.length}):\n\`\`\`${CHUNKS[0]}\`\`\``,
-        flags: 64, // MessageFlags.Ephemeral
+        flags: 64, // MessageFlags.Ephemeral.
       });
 
-      // Subsequent messages with follow-up
+      // Subsequent messages with follow-up.
       for (let i = 1; i < CHUNKS.length; i++) {
         await interaction.followUp({
           content: `\`\`\`${CHUNKS[i]}\`\`\``,
-          flags: 64, // MessageFlags.Ephemeral
+          flags: 64, // MessageFlags.Ephemeral.
         });
       }
       break;
     case "ebp_admin_refresh":
-      // Verify that this is the bot administrator
+      // Verify that this is the bot administrator.
       if (interaction.user.id !== HEYHEYCHICKEN_DISCORD_ID) {
         await interaction.reply({
           content:
             "This command is reserved for the bot administrator (HeyHeyChicken).",
-          flags: 64, // MessageFlags.Ephemeral
+          flags: 64, // MessageFlags.Ephemeral.
         });
         return;
       }
 
       const SERVER_ID = interaction.options.getString("server_id");
 
-      checkWeaponsDataFromAPI(async () => {
+      checkDataFromAPI(async () => {
         const SERVER = DISCORD._getServers().find(
           (server) => server.id == SERVER_ID
         );
@@ -388,11 +336,12 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
             for (let message of MESSAGES) {
               await DISCORD.deleteMessage(message);
             }
-            refresh(SERVER);
+            WEAPON_MANAGER.refreshServer(SERVER, weapons, weaponsUrls, i18n);
+            MODE_MANAGER.refreshServer(SERVER, modes, modesUrls, i18n);
 
             await interaction.reply({
               content: `Forced refresh of server "${SERVER.name}"...`,
-              flags: 64, // MessageFlags.Ephemeral
+              flags: 64, // MessageFlags.Ephemeral.
             });
           } else {
             console.error(
@@ -400,66 +349,66 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
             );
             await interaction.reply({
               content: `Error: No "Weapons" lobby found on server ${SERVER_ID}.`,
-              flags: 64, // MessageFlags.Ephemeral
+              flags: 64, // MessageFlags.Ephemeral.
             });
           }
         } else {
           console.error(`Error: Server ${SERVER_ID} not found.`);
           await interaction.reply({
             content: `Error: Server ${SERVER_ID} not found.`,
-            flags: 64, // MessageFlags.Ephemeral
+            flags: 64, // MessageFlags.Ephemeral.
           });
         }
       });
       break;
     case "ebp_admin_sync":
-      // Verify that this is the bot administrator
+      // Verify that this is the bot administrator.
       if (interaction.user.id !== HEYHEYCHICKEN_DISCORD_ID) {
         await interaction.reply({
           content:
             "This command is reserved for the bot administrator (HeyHeyChicken).",
-          flags: 64, // MessageFlags.Ephemeral
+          flags: 64, // MessageFlags.Ephemeral.
         });
         return;
       }
 
       await interaction.reply({
         content: "Synchronizing with the API...",
-        flags: 64, // MessageFlags.Ephemeral
+        flags: 64, // MessageFlags.Ephemeral.
       });
 
-      checkWeaponsDataFromAPI(() => {
+      checkDataFromAPI(() => {
         interaction.followUp({
           content: "Synchronization with the API complete.",
-          flags: 64, // MessageFlags.Ephemeral
+          flags: 64, // MessageFlags.Ephemeral.
         });
       });
       break;
     case "ebp_refresh_all":
-      // Verify that this is the bot administrator
+      // Verify that this is the bot administrator.
       if (interaction.user.id !== HEYHEYCHICKEN_DISCORD_ID) {
         await interaction.reply({
           content:
             "This command is reserved for the bot administrator (HeyHeyChicken).",
-          flags: 64, // MessageFlags.Ephemeral
+          flags: 64, // MessageFlags.Ephemeral.
         });
         return;
       }
 
       await interaction.reply({
         content: "Rafraîchissement de tous les serveurs Discord en cours...",
-        flags: 64, // MessageFlags.Ephemeral
+        flags: 64, // MessageFlags.Ephemeral.
       });
 
       loop();
       break;
     case "ebp_server_owner":
-      // Verify that this is the bot administrator
+      // Verify that this is the bot administrator.
       if (interaction.user.id !== HEYHEYCHICKEN_DISCORD_ID) {
         await interaction.reply({
           content:
             "This command is reserved for the bot administrator (HeyHeyChicken).",
-          flags: 64, // MessageFlags.Ephemeral
+          flags: 64, // MessageFlags.Ephemeral.
         });
         return;
       }
@@ -475,19 +424,19 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
 
           await interaction.reply({
             content: `The owner of the server "${TARGET_SERVER.name}" is: **[${OWNER.user.username}](https://discordapp.com/users/${OWNER.user.id})**.`,
-            flags: 64 | 4, // MessageFlags.Ephemeral + SuppressEmbeds
+            flags: 64 | 4, // MessageFlags.Ephemeral + SuppressEmbeds.
           });
         } catch (error) {
           console.error("Error retrieving server owner:", error);
           await interaction.reply({
             content: `Error retrieving server owner ${TARGET_SERVER_ID}.`,
-            flags: 64, // MessageFlags.Ephemeral
+            flags: 64, // MessageFlags.Ephemeral.
           });
         }
       } else {
         await interaction.reply({
           content: `Error: Server ${TARGET_SERVER_ID} not found.`,
-          flags: 64, // MessageFlags.Ephemeral
+          flags: 64, // MessageFlags.Ephemeral.
         });
       }
       break;
@@ -499,13 +448,19 @@ DISCORD.client.once("clientReady", async () => {
     `Node.JS is connected to the bot: ${DISCORD.client.user.username}.`
   );
 
+  // We retrieve the URLs of the weapons.
   AXIOS.get(API_URL + "weapons_urls").then((response2) => {
     weaponsUrls = response2.data;
 
-    setInterval(() => {
-      loop();
-    }, 1000 * 60 * 60 * 24); // The script will run every 24 hours.
-    checkWeaponsDataFromAPI();
+    // We retrieve the URLs of the modes.
+    AXIOS.get(API_URL + "modes_urls").then((response3) => {
+      modesUrls = response3.data;
+
+      setInterval(() => {
+        loop();
+      }, 1000 * 60 * 60 * 24); // The script will run every 24 hours.
+      checkDataFromAPI();
+    });
   });
 });
 

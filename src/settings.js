@@ -1,16 +1,20 @@
+// Copyright (c) 2025, Antoine Duval
+// This file is part of a source-visible project.
+// See LICENSE for terms. Unauthorized use is prohibited.
+
 //#region Imports
 
-const FS = require("fs"); // Cette librairie me permet de travailler avec des fichiers locaux.
-const PATH = require("path"); // Cette  librairie me permet de créer des chemins d'accès liés à l'OS.
+const FS = require("fs");
+const PATH = require("path");
 
 //#endregion
 
 /**
- * Cette classe a pour but de télécharger les screenshots des armes dans toutes les langues.
+ * This class aims to upload screenshots of weapons in all languages.
  */
 class Settings {
   constructor() {
-    // On récupère les réglages du projet.
+    // We retrieve the project settings.
     const SETTINGS_PATH = PATH.join(__dirname, "..", "settings.json");
     if (!FS.existsSync(SETTINGS_PATH)) {
       FS.writeFileSync(
@@ -30,7 +34,7 @@ class Settings {
       this.settings.discord_bot_token.length == 0
     ) {
       throw new Error(
-        'Vous devez définir la valeur de "discord_bot_token" dans le fichier "settings.json".'
+        'You need to define the value of "discord_bot_token" in the "settings.json" file.'
       );
     }
   }

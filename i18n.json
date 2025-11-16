@@ -1,22 +1,32 @@
 {
   "en": {
     "source": "Source",
-    "install": "Install this bot on your server"
+    "install": "Install this bot on your server",
+    "weapons": "Weapons",
+    "modes": "Modes"
   },
   "es": {
     "source": "Fuente",
-    "install": "Instala este bot en tu servidor"
+    "install": "Instala este bot en tu servidor",
+    "weapons": "Armas",
+    "modes": "Modos"
   },
   "fr": {
     "source": "Source",
-    "install": "Installez ce bot sur votre serveur"
+    "install": "Installez ce bot sur votre serveur",
+    "weapons": "Armes",
+    "modes": "Modes"
   },
   "ro": {
     "source": "Sursă",
-    "install": "Instalați acest bot pe serverul dvs."
+    "install": "Instalați acest bot pe serverul dvs.",
+    "weapons": "Arme",
+    "modes": "Moduri"
   },
   "de": {
     "source": "Quelle",
-    "install": "Installieren Sie diesen Bot auf Ihrem Server"
+    "install": "Installieren Sie diesen Bot auf Ihrem Server",
+    "weapons": "Waffen",
+    "modes": "Modi"
   }
 }
