@@ -26,7 +26,6 @@ class Discord {
       intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent,
       ],
     });
   }
@@ -67,6 +66,13 @@ class Discord {
    */
   async getOldMessages(channel, limit = 100) {
     console.log(`                Trying to get old messages...`);
+
+    // Check if bot has permission to read message history
+    if (!channel.permissionsFor(this.client.user).has(PermissionFlagsBits.ReadMessageHistory)) {
+      console.error(`Bot lacks ReadMessageHistory permission in channel: ${channel.name}`);
+      return [];
+    }
+
     let allMessages = [];
 
     try {
