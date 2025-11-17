@@ -3,30 +3,40 @@
     "source": "Source",
     "install": "Install this bot on your server",
     "weapons": "Weapons",
-    "modes": "Modes"
+    "modes": "Modes",
+    "maps": "Maps",
+    "heroes": "Hero"
   },
   "es": {
     "source": "Fuente",
     "install": "Instala este bot en tu servidor",
     "weapons": "Armas",
-    "modes": "Modos"
+    "modes": "Modos",
+    "maps": "Mapas",
+    "heroes": "Héroe"
   },
   "fr": {
     "source": "Source",
     "install": "Installez ce bot sur votre serveur",
     "weapons": "Armes",
-    "modes": "Modes"
+    "modes": "Modes",
+    "maps": "Cartes",
+    "heroes": "Héros"
   },
   "ro": {
     "source": "Sursă",
     "install": "Instalați acest bot pe serverul dvs.",
     "weapons": "Arme",
-    "modes": "Moduri"
+    "modes": "Moduri",
+    "maps": "Hărți",
+    "heroes": "Erdi"
   },
   "de": {
     "source": "Quelle",
     "install": "Installieren Sie diesen Bot auf Ihrem Server",
     "weapons": "Waffen",
-    "modes": "Modi"
+    "modes": "Modi",
+    "maps": "Karten",
+    "heroes": "Helden"
   }
 }

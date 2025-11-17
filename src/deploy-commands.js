@@ -33,6 +33,8 @@ const COMMANDS = [
         choices: [
           { name: "Weapons", value: "weapons" },
           { name: "Modes", value: "modes" },
+          { name: "Maps", value: "maps" },
+          { name: "Heroes", value: "heroes" },
         ],
       },
       {

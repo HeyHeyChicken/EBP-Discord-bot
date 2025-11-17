@@ -95,7 +95,7 @@ class ScreenshotService {
       return;
     }
 
-    const OLD_DEV_MESSAGES = await discord.getOldMessages(DISCORD_CHANNEL, 200);
+    const OLD_DEV_MESSAGES = await discord.getOldMessages(DISCORD_CHANNEL, 300);
 
     await this.initBrowser(width, height);
 

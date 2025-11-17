@@ -13,8 +13,10 @@ const Discord = require("./discord");
 const DatabaseService = require("./services/DatabaseService");
 const ScreenshotService = require("./services/ScreenshotService");
 
-const WeaponManager = require("././managers/WeaponManager");
+const HeroManager = require("././managers/HeroManager");
+const MapManager = require("././managers/MapManager");
 const ModeManager = require("././managers/ModeManager");
+const WeaponManager = require("././managers/WeaponManager");
 
 //#endregion
 
@@ -28,7 +30,13 @@ let weapons; // The list of weapons from the API will be stored here.
 let weaponsUrls; // The list of URLs for the "Weapons" page will be stored here.
 
 let modes; // The list of modes from the API will be stored here.
-let modesUrls; // The list of URLs for the "Heroes" page will be stored here.
+let modesUrls; // The list of URLs for the "Modes" page will be stored here.
+
+let maps; // The list of maps from the API will be stored here.
+let mapsUrls; // The list of URLs for the "Maps" page will be stored here.
+
+let heroes; // The list of maps from the API will be stored here.
+let heroesUrls; // The list of URLs for the "Maps" page will be stored here.
 
 const SETTINGS = new Settings();
 const DISCORD = new Discord(DEV_MODE);
@@ -46,6 +54,18 @@ const MODE_MANAGER = new ModeManager(
   SCREENSHOT_SERVICE,
   EBP_DOMAIN
 );
+const MAP_MANAGER = new MapManager(
+  DISCORD,
+  DATABASE,
+  SCREENSHOT_SERVICE,
+  EBP_DOMAIN
+);
+const HERO_MANAGER = new HeroManager(
+  DISCORD,
+  DATABASE,
+  SCREENSHOT_SERVICE,
+  EBP_DOMAIN
+);
 const WEB_PORT = DEV_MODE ? 3001 : 3000;
 const I18N = JSON.parse(
   FS.readFileSync(PATH.join(__dirname, "..", "i18n.json"), "utf8")
@@ -58,7 +78,7 @@ const HEYHEYCHICKEN_DISCORD_ID = "195958479394045952";
 
 /**
  * This web server tells the user if the bot is online.
- + URL : https://discord-weapons-bot.ebp.gg/
+ + URL : https://discord-bot.ebp.gg/
  */
 const SERVER = HTTP.createServer((req, res) => {
   if (req.url === "/") {
@@ -124,9 +144,28 @@ function checkDataFromAPI(callback) {
       );
       console.log("    Modes refreshed.");
 
-      if (callback) {
-        callback();
-      }
+      console.log("    Refreshing maps...");
+      MAP_MANAGER.fetchDataFromAPI(async (fetchedMaps) => {
+        maps = fetchedMaps;
+        await MAP_MANAGER.downloadScreenshots(fetchedMaps, mapsUrls, 1200, 800);
+        console.log("    Maps refreshed.");
+
+        console.log("    Refreshing heroes...");
+        HERO_MANAGER.fetchDataFromAPI(async (fetchedHeroes) => {
+          heroes = fetchedHeroes;
+          await HERO_MANAGER.downloadScreenshots(
+            fetchedHeroes,
+            heroesUrls,
+            1550,
+            1300
+          );
+          console.log("    Heroes refreshed.");
+
+          if (callback) {
+            callback();
+          }
+        });
+      });
     });
   });
 }
@@ -144,6 +183,8 @@ async function loop() {
       if (!DEV_MODE || (DEV_MODE && SERVER.name == "EBP - EVA Battle Plan")) {
         WEAPON_MANAGER.refreshServer(SERVER, weapons, weaponsUrls, i18n);
         MODE_MANAGER.refreshServer(SERVER, modes, modesUrls, i18n);
+        MAP_MANAGER.refreshServer(SERVER, maps, mapsUrls, i18n);
+        HERO_MANAGER.refreshServer(SERVER, heroes, heroesUrls, i18n);
       }
     }
     console.log("Loop end.");
@@ -182,6 +223,8 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
 
         WEAPON_MANAGER.refreshServer(SERVER, weapons, weaponsUrls, i18n);
         MODE_MANAGER.refreshServer(SERVER, modes, modesUrls, i18n);
+        MAP_MANAGER.refreshServer(SERVER, maps, mapsUrls, i18n);
+        HERO_MANAGER.refreshServer(SERVER, heroes, heroesUrls, i18n);
       } else {
         await interaction.reply({
           content: "Error: Server not found.",
@@ -209,6 +252,11 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
           emoji = "🔫";
         case "modes":
           emoji = "🚩";
+        case "maps":
+          emoji = "🗺️";
+        case "heroes":
+          emoji = "🤖";
+          break;
       }
 
       DISCORD.createChannel(
@@ -218,6 +266,8 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
         async (channel) => {
           WEAPON_MANAGER.refreshChannel(channel, weapons, weaponsUrls, i18n);
           MODE_MANAGER.refreshChannel(channel, modes, modesUrls, i18n);
+          MAP_MANAGER.refreshChannel(channel, maps, mapsUrls, i18n);
+          HERO_MANAGER.refreshChannel(channel, heroes, heroesUrls, i18n);
 
           await interaction.reply({
             content: `Salon created : ${channel.name}`,
@@ -254,6 +304,13 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
         i18n
       );
       MODE_MANAGER.refreshChannel(interaction.channel, modes, modesUrls, i18n);
+      MAP_MANAGER.refreshChannel(interaction.channel, maps, mapsUrls, i18n);
+      HERO_MANAGER.refreshChannel(
+        interaction.channel,
+        heroes,
+        heroesUrls,
+        i18n
+      );
       break;
     case "ebp_admin_list":
       // Verify that this is the bot administrator.
@@ -338,6 +395,8 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
             }
             WEAPON_MANAGER.refreshServer(SERVER, weapons, weaponsUrls, i18n);
             MODE_MANAGER.refreshServer(SERVER, modes, modesUrls, i18n);
+            MAP_MANAGER.refreshServer(SERVER, maps, mapsUrls, i18n);
+            HERO_MANAGER.refreshServer(SERVER, heroes, heroesUrls, i18n);
 
             await interaction.reply({
               content: `Forced refresh of server "${SERVER.name}"...`,
@@ -456,10 +515,20 @@ DISCORD.client.once("clientReady", async () => {
     AXIOS.get(API_URL + "modes_urls").then((response3) => {
       modesUrls = response3.data;
 
-      setInterval(() => {
-        loop();
-      }, 1000 * 60 * 60 * 24); // The script will run every 24 hours.
-      checkDataFromAPI();
+      // We retrieve the URLs of the maps.
+      AXIOS.get(API_URL + "maps_urls").then((response4) => {
+        mapsUrls = response4.data;
+
+        // We retrieve the URLs of the maps.
+        AXIOS.get(API_URL + "heroes_urls").then((response5) => {
+          heroesUrls = response5.data;
+
+          setInterval(() => {
+            loop();
+          }, 1000 * 60 * 60 * 24); // The script will run every 24 hours.
+          checkDataFromAPI();
+        });
+      });
     });
   });
 });

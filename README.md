@@ -5,7 +5,7 @@
 
 **EBP's Discord bot** is a bot that will automatically update EVA weapons and modes on your Discord server.<br>
 
-[![Discord](https://discord-weapons-bot.ebp.gg/)](https://discord-weapons-bot.ebp.gg/)
+[![Discord](https://discord-bot.ebp.gg/)](https://discord-bot.ebp.gg/)
 
 <img width="410px" src="https://raw.githubusercontent.com/HeyHeyChicken/EBP-Discord-bot/refs/heads/main/.github/screenshot.jpg">
 </div>

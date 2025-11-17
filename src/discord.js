@@ -23,10 +23,7 @@ class Discord {
 
     this._devMode = devMode;
     this.client = new Client({
-      intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages,
-      ],
+      intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
     });
   }
 
@@ -68,8 +65,14 @@ class Discord {
     console.log(`                Trying to get old messages...`);
 
     // Check if bot has permission to read message history
-    if (!channel.permissionsFor(this.client.user).has(PermissionFlagsBits.ReadMessageHistory)) {
-      console.error(`Bot lacks ReadMessageHistory permission in channel: ${channel.name}`);
+    if (
+      !channel
+        .permissionsFor(this.client.user)
+        .has(PermissionFlagsBits.ReadMessageHistory)
+    ) {
+      console.error(
+        `Bot lacks ReadMessageHistory permission in channel: ${channel.name}`
+      );
       return [];
     }
 
