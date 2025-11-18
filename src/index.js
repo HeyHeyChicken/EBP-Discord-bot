@@ -250,10 +250,13 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
       switch (MODE) {
         case "weapons":
           emoji = "🔫";
+          break;
         case "modes":
           emoji = "🚩";
+          break;
         case "maps":
           emoji = "🗺️";
+          break;
         case "heroes":
           emoji = "🤖";
           break;
