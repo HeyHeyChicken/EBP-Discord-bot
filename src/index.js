@@ -448,10 +448,15 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
             for (let message of MESSAGES) {
               await DISCORD.deleteMessage(message);
             }
-            WEAPON_MANAGER.refreshServer(SERVER, weapons, weaponsUrls, i18n);
-            MODE_MANAGER.refreshServer(SERVER, modes, modesUrls, i18n);
-            MAP_MANAGER.refreshServer(SERVER, maps, mapsUrls, i18n);
-            HERO_MANAGER.refreshServer(SERVER, heroes, heroesUrls, i18n);
+            WEAPON_MANAGER.refreshChannel(
+              CHANNELS[0],
+              weapons,
+              weaponsUrls,
+              i18n
+            );
+            MODE_MANAGER.refreshChannel(CHANNELS[0], modes, modesUrls, i18n);
+            MAP_MANAGER.refreshChannel(CHANNELS[0], maps, mapsUrls, i18n);
+            HERO_MANAGER.refreshChannel(CHANNELS[0], heroes, heroesUrls, i18n);
 
             await interaction.reply({
               content: `Forced refresh of server \""${SERVER.name}"\"...`,
