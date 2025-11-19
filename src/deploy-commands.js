@@ -58,13 +58,32 @@ const COMMANDS = [
     default_member_permissions: 0x0000000000000008, // ADMINISTRATOR permission
   },
   {
-    name: "ebp_admin_refresh",
+    name: "ebp_admin_refresh_server",
     description: "Force refresh a specific server (EBP admin only).",
     default_member_permissions: 0x0000000000000008, // ADMINISTRATOR permission
     options: [
       {
         name: "server_id",
         description: "The ID of the server to refresh",
+        type: 3, // STRING type
+        required: true,
+      },
+    ],
+  },
+  {
+    name: "ebp_admin_refresh_channel",
+    description: "Force refresh a specific channel (EBP admin only).",
+    default_member_permissions: 0x0000000000000008, // ADMINISTRATOR permission
+    options: [
+      {
+        name: "server_id",
+        description: "The ID of the server to refresh",
+        type: 3, // STRING type
+        required: true,
+      },
+      {
+        name: "channel_id",
+        description: "The ID of the channel to refresh",
         type: 3, // STRING type
         required: true,
       },

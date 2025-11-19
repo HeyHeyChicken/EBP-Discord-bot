@@ -366,7 +366,7 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
         });
       }
       break;
-    case "ebp_admin_refresh":
+    case "ebp_admin_refresh_server":
       // Verify that this is the bot administrator.
       if (interaction.user.id !== HEYHEYCHICKEN_DISCORD_ID) {
         await interaction.reply({
@@ -385,13 +385,65 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
         );
         if (SERVER) {
           const CHANNELS = DISCORD._getServerChannels(SERVER).filter(
-            (channel) =>
-              channel.topic && channel.topic.includes("#EBP_WEAPONS_BOT(")
+            (channel) => channel.topic && channel.topic.includes("#EBP_")
           );
           if (CHANNELS.length > 0) {
-            console.log(
-              `There are ${CHANNELS.length} weapon rooms on this server.`
-            );
+            console.log(`There are ${CHANNELS.length} rooms on this server.`);
+            CHANNELS.forEach(async (channel) => {
+              const MESSAGES = await DISCORD.getOldMessages(channel);
+              for (let message of MESSAGES) {
+                await DISCORD.deleteMessage(message);
+              }
+              WEAPON_MANAGER.refreshServer(SERVER, weapons, weaponsUrls, i18n);
+              MODE_MANAGER.refreshServer(SERVER, modes, modesUrls, i18n);
+              MAP_MANAGER.refreshServer(SERVER, maps, mapsUrls, i18n);
+              HERO_MANAGER.refreshServer(SERVER, heroes, heroesUrls, i18n);
+
+              await interaction.reply({
+                content: `Forced refresh of server "${SERVER.name}"...`,
+                flags: 64, // MessageFlags.Ephemeral.
+              });
+            });
+          } else {
+            console.error('There is no "#EBP_" channel in the Discord server.');
+            await interaction.reply({
+              content: `Error: No "#EBP_" lobby found on server \""${SERVER.name}"\".`,
+              flags: 64, // MessageFlags.Ephemeral.
+            });
+          }
+        } else {
+          console.error(`Error: Server ${SERVER_ID} not found.`);
+          await interaction.reply({
+            content: `Error: Server ${SERVER_ID} not found.`,
+            flags: 64, // MessageFlags.Ephemeral.
+          });
+        }
+      });
+      break;
+    case "ebp_admin_refresh_channel":
+      // Verify that this is the bot administrator.
+      if (interaction.user.id !== HEYHEYCHICKEN_DISCORD_ID) {
+        await interaction.reply({
+          content:
+            "This command is reserved for the bot administrator (HeyHeyChicken).",
+          flags: 64, // MessageFlags.Ephemeral.
+        });
+        return;
+      }
+
+      const SERVER_ID_TO_REFRESH = interaction.options.getString("server_id");
+      const CHANNEL_ID_TO_REFRESH = interaction.options.getString("channel_id");
+
+      checkDataFromAPI(async () => {
+        const SERVER = DISCORD._getServers().find(
+          (server) => server.id == SERVER_ID_TO_REFRESH
+        );
+        if (SERVER) {
+          const CHANNELS = DISCORD._getServerChannels(SERVER).filter(
+            (channel) => channel.id == CHANNEL_ID_TO_REFRESH
+          );
+          if (CHANNELS.length == 1) {
+            console.log(`There are ${CHANNELS.length} rooms on this server.`);
             const MESSAGES = await DISCORD.getOldMessages(CHANNELS[0]);
             for (let message of MESSAGES) {
               await DISCORD.deleteMessage(message);
@@ -402,22 +454,20 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
             HERO_MANAGER.refreshServer(SERVER, heroes, heroesUrls, i18n);
 
             await interaction.reply({
-              content: `Forced refresh of server "${SERVER.name}"...`,
+              content: `Forced refresh of server \""${SERVER.name}"\"...`,
               flags: 64, // MessageFlags.Ephemeral.
             });
           } else {
-            console.error(
-              'There is no "Weapons" channel in the Discord server.'
-            );
+            console.error('There is no "#EBP_" channel in the Discord server.');
             await interaction.reply({
-              content: `Error: No "Weapons" lobby found on server ${SERVER_ID}.`,
+              content: `Error: No "#EBP_" lobby found on server \""${SERVER.name}"\".`,
               flags: 64, // MessageFlags.Ephemeral.
             });
           }
         } else {
-          console.error(`Error: Server ${SERVER_ID} not found.`);
+          console.error(`Error: Server ${SERVER_ID_TO_REFRESH} not found.`);
           await interaction.reply({
-            content: `Error: Server ${SERVER_ID} not found.`,
+            content: `Error: Server ${SERVER_ID_TO_REFRESH} not found.`,
             flags: 64, // MessageFlags.Ephemeral.
           });
         }
