@@ -95,12 +95,12 @@ const COMMANDS = [
     default_member_permissions: 0x0000000000000008, // ADMINISTRATOR permission
   },
   {
-    name: "ebp_refresh_all",
+    name: "ebp_admin_refresh_all",
     description: "Force refresh all Discord servers (EBP admin only).",
     default_member_permissions: 0x0000000000000008, // ADMINISTRATOR permission
   },
   {
-    name: "ebp_server_owner",
+    name: "ebp_admin_get_server_owner",
     description: "Get the owner of a Discord server (EBP admin only).",
     default_member_permissions: 0x0000000000000008, // ADMINISTRATOR permission
     options: [
