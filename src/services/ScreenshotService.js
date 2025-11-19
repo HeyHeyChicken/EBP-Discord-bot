@@ -26,6 +26,8 @@ class ScreenshotService {
   async initBrowser(width, height) {
     if (this.browser) return;
 
+    console.log(process.platform);
+
     this.browser = await PUPPETEER.launch({
       executablePath: "/usr/bin/chromium", //"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
@@ -95,7 +97,7 @@ class ScreenshotService {
       return;
     }
 
-    const OLD_DEV_MESSAGES = await discord.getOldMessages(DISCORD_CHANNEL, 300);
+    const OLD_DEV_MESSAGES = await discord.getOldMessages(DISCORD_CHANNEL, 400);
 
     await this.initBrowser(width, height);
 

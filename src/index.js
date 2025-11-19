@@ -23,7 +23,7 @@ const WeaponManager = require("././managers/WeaponManager");
 //#region Variables
 
 const DEV_MODE = process.argv.slice(2)[0] == "true";
-const EBP_DOMAIN = "https://evabattleplan.com";
+const EBP_DOMAIN = "https://ebp.gg";
 const API_URL = EBP_DOMAIN + "/back/api-discord/?route="; // EBP REST API URL - EVA Battle Plan.
 
 let weapons; // The list of weapons from the API will be stored here.
