@@ -26,10 +26,14 @@ class ScreenshotService {
   async initBrowser(width, height) {
     if (this.browser) return;
 
-    console.log(process.platform);
+    let executablePath = "/usr/bin/chromium";
+    if (process.platform == "darwin") {
+      executablePath =
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+    }
 
     this.browser = await PUPPETEER.launch({
-      executablePath: "/usr/bin/chromium", //"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      executablePath: executablePath,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
       headless: "shell",
       defaultViewport: null,
