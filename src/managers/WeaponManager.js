@@ -157,7 +157,9 @@ class WeaponManager extends ContentManager {
 
       let nbMessageSend = 0;
 
+      console.log(`            NB weapons: ${items.length}`);
       for (const WEAPON of items) {
+        console.log(`            Working on "${WEAPON.name}"`);
         const DATE = new Date(WEAPON.date);
         const DATE_STRING = this._formatDate(DATE);
         let allowAddNewWeapon = true;
@@ -176,6 +178,7 @@ class WeaponManager extends ContentManager {
 
         if (IMAGE) {
           if (OLD_BOT_MESSAGE) {
+            console.log(`            There is an old message.`);
             allowAddNewWeapon = false;
             if (OLD_BOT_MESSAGE.embeds[0]) {
               const OLD_DATE_STRING = OLD_BOT_MESSAGE.embeds[0].footer.text;
@@ -203,6 +206,7 @@ class WeaponManager extends ContentManager {
           }
 
           if (allowAddNewWeapon) {
+            console.log(`            Adding the message.`);
             if (
               await this._discord.sendMessage(
                 channel,
