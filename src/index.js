@@ -234,10 +234,42 @@ async function refreshChannel(interaction) {
         await DISCORD.deleteMessage(message);
       }
 
-      WEAPON_MANAGER.refreshChannel(CHANNELS[0], weapons, weaponsUrls, i18n);
-      MODE_MANAGER.refreshChannel(CHANNELS[0], modes, modesUrls, i18n);
-      MAP_MANAGER.refreshChannel(CHANNELS[0], maps, mapsUrls, i18n);
-      HERO_MANAGER.refreshChannel(CHANNELS[0], heroes, heroesUrls, i18n);
+      WEAPON_MANAGER.refreshChannel(
+        CHANNELS[0],
+        weapons,
+        weaponsUrls,
+        i18n,
+        () => {
+          MODE_MANAGER.refreshChannel(
+            CHANNELS[0],
+            modes,
+            modesUrls,
+            i18n,
+            () => {
+              MAP_MANAGER.refreshChannel(
+                CHANNELS[0],
+                maps,
+                mapsUrls,
+                i18n,
+                () => {
+                  HERO_MANAGER.refreshChannel(
+                    CHANNELS[0],
+                    heroes,
+                    heroesUrls,
+                    i18n,
+                    () => {
+                      interaction.followUp({
+                        content: "Refreshed!",
+                        flags: 64, // MessageFlags.Ephemeral.
+                      });
+                    }
+                  );
+                }
+              );
+            }
+          );
+        }
+      );
     } else {
       console.error('There is no "#EBP_" channel in the Discord server.');
       await interaction.followUp({
@@ -351,15 +383,42 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
         `${emoji}${i18n(MODE, LANGUAGE)}`,
         `#EBP_${MODE.toUpperCase()}_BOT(${LANGUAGE})`,
         async (channel) => {
-          WEAPON_MANAGER.refreshChannel(channel, weapons, weaponsUrls, i18n);
-          MODE_MANAGER.refreshChannel(channel, modes, modesUrls, i18n);
-          MAP_MANAGER.refreshChannel(channel, maps, mapsUrls, i18n);
-          HERO_MANAGER.refreshChannel(channel, heroes, heroesUrls, i18n);
-
-          await interaction.reply({
-            content: `Salon created : ${channel.name}`,
-            flags: 64, // MessageFlags.Ephemeral.
-          });
+          WEAPON_MANAGER.refreshChannel(
+            channel,
+            weapons,
+            weaponsUrls,
+            i18n,
+            () => {
+              MODE_MANAGER.refreshChannel(
+                channel,
+                modes,
+                modesUrls,
+                i18n,
+                () => {
+                  MAP_MANAGER.refreshChannel(
+                    channel,
+                    maps,
+                    mapsUrls,
+                    i18n,
+                    () => {
+                      HERO_MANAGER.refreshChannel(
+                        channel,
+                        heroes,
+                        heroesUrls,
+                        i18n,
+                        () => {
+                          interaction.reply({
+                            content: `Salon created : ${channel.name}`,
+                            flags: 64, // MessageFlags.Ephemeral.
+                          });
+                        }
+                      );
+                    }
+                  );
+                }
+              );
+            }
+          );
         }
       );
 
