@@ -241,7 +241,7 @@ class WeaponManager extends ContentManager {
             message.delete();
           } catch (e) {
             console.error(
-              `        Unable to delete the message (Server: "${server.name}", channel: "${channel.name}").`,
+              `        Unable to delete the message (Server: "${channel.guild.name}", channel: "${channel.name}").`,
               e
             );
           }
@@ -261,7 +261,7 @@ class WeaponManager extends ContentManager {
           });
         } catch (e) {
           console.error(
-            `        Unable to send a message (Server: "${server.name}", channel: "${channel.name}").`,
+            `        Unable to send a message (Server: "${channel.guild.name}", channel: "${channel.name}").`,
             e
           );
         }
