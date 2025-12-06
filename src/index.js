@@ -388,15 +388,37 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
         interaction.channel,
         weapons,
         weaponsUrls,
-        i18n
-      );
-      MODE_MANAGER.refreshChannel(interaction.channel, modes, modesUrls, i18n);
-      MAP_MANAGER.refreshChannel(interaction.channel, maps, mapsUrls, i18n);
-      HERO_MANAGER.refreshChannel(
-        interaction.channel,
-        heroes,
-        heroesUrls,
-        i18n
+        i18n,
+        () => {
+          MODE_MANAGER.refreshChannel(
+            interaction.channel,
+            modes,
+            modesUrls,
+            i18n,
+            () => {
+              MAP_MANAGER.refreshChannel(
+                interaction.channel,
+                maps,
+                mapsUrls,
+                i18n,
+                () => {
+                  HERO_MANAGER.refreshChannel(
+                    interaction.channel,
+                    heroes,
+                    heroesUrls,
+                    i18n,
+                    () => {
+                      interaction.followUp({
+                        content: "Refreshed!",
+                        flags: 64, // MessageFlags.Ephemeral.
+                      });
+                    }
+                  );
+                }
+              );
+            }
+          );
+        }
       );
       break;
     case "ebp_admin_list":

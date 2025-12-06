@@ -133,8 +133,9 @@ class ContentManager {
    * @param {Array} items - List of items.
    * @param {Object} baseUrls - Base URLs by language.
    * @param {Function} i18nFunction - Translation function.
+   * @param {Function} callback - Callback function.
    */
-  async refreshChannel(channel, items, baseUrls, i18nFunction) {
+  async refreshChannel(channel, items, baseUrls, i18nFunction, callback) {
     throw new Error("refreshChannel() must be implemented by the child class.");
   }
 

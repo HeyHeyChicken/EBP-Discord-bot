@@ -135,8 +135,9 @@ class HeroManager extends ContentManager {
    * @param {Array} items - List of items.
    * @param {Object} baseUrls - Base URLs by language.
    * @param {Function} i18nFunction - Translation function.
+   * @param {Function} callback - Callback function.
    */
-  async refreshChannel(channel, items, baseUrls, i18nFunction) {
+  async refreshChannel(channel, items, baseUrls, i18nFunction, callback) {
     if (channel.topic.includes(this.getChannelTag())) {
       const LANGUAGE = channel.topic
         .split(this.getChannelTag())
@@ -260,6 +261,14 @@ class HeroManager extends ContentManager {
             e
           );
         }
+      }
+
+      if (callback) {
+        callback();
+      }
+    } else {
+      if (callback) {
+        callback();
       }
     }
   }
