@@ -105,13 +105,14 @@ class WeaponManager extends ContentManager {
    * @param {Array} items - List of elements.
    * @param {Object} baseUrls - Base URLs by language.
    * @param {Function} i18nFunction - Translation function.
+   * @param {Object} interaction - (Optionnal) The Discord message that the application received.
    */
-  async refreshServer(server, items, baseUrls, i18nFunction) {
+  async refreshServer(server, items, baseUrls, i18nFunction, interaction) {
     console.log(`        Server: "${server.name}"`);
 
     // Retrieve the channels that contain the weapon tags.
     const WEAPONS_CHANNELS = this._discord
-      ._getServerChannels(server)
+      .getServerChannels(server)
       .filter(
         (channel) =>
           channel.topic && channel.topic.includes(this.getChannelTag())
@@ -123,7 +124,7 @@ class WeaponManager extends ContentManager {
     }
 
     for (const CHANNEL of WEAPONS_CHANNELS) {
-      this.refreshChannel(CHANNEL, items, baseUrls, i18nFunction);
+      this.refreshChannel(CHANNEL, items, baseUrls, i18nFunction, interaction);
     }
 
     console.log("Weapons refresh finished!");
@@ -135,10 +136,18 @@ class WeaponManager extends ContentManager {
    * @param {Array} items - List of items.
    * @param {Object} baseUrls - Base URLs by language.
    * @param {Function} i18nFunction - Translation function.
+   * @param {Object} interaction - The Discord message that the application received.
    * @param {Function} callback - Callback function.
    */
-  async refreshChannel(channel, items, baseUrls, i18nFunction, callback) {
-    if (channel.topic.includes(this.getChannelTag())) {
+  async refreshChannel(
+    channel,
+    items,
+    baseUrls,
+    i18nFunction,
+    interaction,
+    callback
+  ) {
+    if (channel && channel.topic.includes(this.getChannelTag())) {
       const LANGUAGE = channel.topic
         .split(this.getChannelTag())
         .at(-1)
@@ -217,7 +226,9 @@ class WeaponManager extends ContentManager {
                   DATE_STRING,
                   IMAGE.url,
                   baseUrls[LANGUAGE] + "/" + encodeURI(WEAPON.name)
-                )
+                ),
+                undefined,
+                interaction
               )
             ) {
               nbMessageSend++;

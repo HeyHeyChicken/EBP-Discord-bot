@@ -80,10 +80,10 @@ class ContentManager {
   async downloadScreenshots(items, baseUrls, width, height) {
     console.log(`        Downloading ${this._contentType} screenshots...`);
 
-    const urls = this.prepareUrls(items, baseUrls);
+    const URLS = this.prepareUrls(items, baseUrls);
     await this._screenshotService.downloadScreenshots(
       items,
-      urls,
+      URLS,
       this._contentType,
       this._discord,
       this._database,
@@ -122,8 +122,9 @@ class ContentManager {
    * @param {Array} items - List of elements.
    * @param {Object} baseUrls - Base URLs by language.
    * @param {Function} i18nFunction - Translation function.
+   * @param {Object} interaction - (Optionnal) The Discord message that the application received.
    */
-  async refreshServer(server, items, baseUrls, i18nFunction) {
+  async refreshServer(server, items, baseUrls, i18nFunction, interaction) {
     throw new Error("refreshServer() must be implemented by the child class.");
   }
 
@@ -133,9 +134,17 @@ class ContentManager {
    * @param {Array} items - List of items.
    * @param {Object} baseUrls - Base URLs by language.
    * @param {Function} i18nFunction - Translation function.
+   * @param {Object} interaction - The Discord message that the application received.
    * @param {Function} callback - Callback function.
    */
-  async refreshChannel(channel, items, baseUrls, i18nFunction, callback) {
+  async refreshChannel(
+    channel,
+    items,
+    baseUrls,
+    i18nFunction,
+    interaction,
+    callback
+  ) {
     throw new Error("refreshChannel() must be implemented by the child class.");
   }
 

@@ -84,7 +84,7 @@ class ScreenshotService {
     height
   ) {
     const DISCORD_SERVER = discord
-      ._getServers()
+      .getServers()
       .find((server) => server.id == discord.ebpServerId);
 
     if (!DISCORD_SERVER) {
@@ -93,7 +93,7 @@ class ScreenshotService {
     }
 
     const DISCORD_CHANNEL = discord
-      ._getServerChannels(DISCORD_SERVER)
+      .getServerChannels(DISCORD_SERVER)
       .find((channel) => channel.id == discord.ebpDevChannelId);
 
     if (!DISCORD_CHANNEL) {
@@ -151,13 +151,9 @@ class ScreenshotService {
 
         // Manage the upload to Discord.
         if (
-          await discord.deleteWeaponMessage(
-            OLD_DEV_MESSAGES,
-            FILE_NAME,
-            ITEM.date
-          )
+          await discord.deleteDevMessage(OLD_DEV_MESSAGES, FILE_NAME, ITEM.date)
         ) {
-          const IMAGE_URL = await discord._sendImageToTmpServer(
+          const IMAGE_URL = await discord.sendImageToTmpServer(
             DISCORD_CHANNEL,
             FILE_NAME,
             ITEM.date,

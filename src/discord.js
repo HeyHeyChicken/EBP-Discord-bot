@@ -33,52 +33,96 @@ class Discord {
    * This function returns the list of servers that use the bot.
    * @returns List of servers that use the bot.
    */
-  _getServers() {
+  getServers() {
     return Array.from(this.client.guilds.cache).map((server) => server[1]);
   }
 
   /**
    * This function returns the list of rooms on a server.
-   * @param {*} server Server to analyze.
+   * @param {*} server - Server to analyze.
    * @returns List of rooms on a server.
    */
-  _getServerChannels(server) {
-    return Array.from(server.channels.cache).map((channel) => channel[1]);
-  }
+  getServerChannels(server) {
+    if (!server) {
+      console.error(
+        "Error: Unable to retrieve channels. Server parameter is null or undefined."
+      );
+      return [];
+    }
 
-  /**
-   * This function returns the server to which the room belongs.
-   * @param {*} channel Channel.
-   * @returns Server who owns the chat room.
-   */
-  _getChannelServer(channel) {
-    return this._getServers().find((server) => server.id == channel.guild.id);
+    try {
+      const BOT_MEMBER = server.members.cache.get(this.client.user.id);
+      if (!BOT_MEMBER) {
+        console.error(`Error: Bot is not a member of server "${server.name}"`);
+        return [];
+      }
+
+      // Filter channels where bot can view
+      return Array.from(server.channels.cache)
+        .map((channel) => channel[1])
+        .filter((channel) => {
+          return (
+            channel
+              .permissionsFor(BOT_MEMBER)
+              ?.has(PermissionFlagsBits.ViewChannel) ?? false
+          );
+        });
+    } catch (e) {
+      console.error(
+        `Error: Unable to retrieve channels from server "${server.name}".`,
+        e
+      );
+      return [];
+    }
   }
 
   /**
    * This function returns the old messages from a chat room.
-   * @param {*} channel Trade show to analyze.
-   * @param {*} limit Maximum number of messages to retrieve.
+   * @param {*} channel - Trade show to analyze.
+   * @param {*} limit - Maximum number of messages to retrieve.
    * @returns List of messages from the chat room.
    */
   async getOldMessages(channel, limit = 100) {
     console.log(`                Trying to get old messages...`);
 
-    // Check if bot has permission to read message history
-    if (
-      !channel
-        .permissionsFor(this.client.user)
-        .has(PermissionFlagsBits.ReadMessageHistory)
-    ) {
+    // Validate channel parameter
+    if (!channel) {
       console.error(
-        `Bot lacks ReadMessageHistory permission in channel: ${channel.name}`
+        "        Error: Unable to get messages. Channel parameter is null or undefined."
       );
       return [];
     }
 
-    let allMessages = [];
-
+    const ALL_MESSAGES = [];
     try {
+      const PERMISSIONS = channel.permissionsFor(this.client.user);
+      if (!PERMISSIONS) {
+        console.error(
+          `        Error: Unable to check permissions in channel: ${
+            channel.name || channel.id
+          }`
+        );
+        return [];
+      }
+
+      if (!PERMISSIONS.has(PermissionFlagsBits.ViewChannel)) {
+        console.error(
+          `        Error: Bot lacks ViewChannel permission in channel: ${
+            channel.name || channel.id
+          }`
+        );
+        return [];
+      }
+
+      if (!PERMISSIONS.has(PermissionFlagsBits.ReadMessageHistory)) {
+        console.error(
+          `        Error: Bot lacks ReadMessageHistory permission in channel: ${
+            channel.name || channel.id
+          }`
+        );
+        return [];
+      }
+
       let lastMessageId = null;
       let remaining = limit;
 
@@ -97,7 +141,7 @@ class Discord {
         }
 
         const MESSAGES_ARRAY = Array.from(MESSAGES.values());
-        allMessages.push(...MESSAGES_ARRAY);
+        ALL_MESSAGES.push(...MESSAGES_ARRAY);
 
         lastMessageId = MESSAGES_ARRAY[MESSAGES_ARRAY.length - 1].id;
         remaining -= MESSAGES.size;
@@ -109,8 +153,34 @@ class Discord {
       );
     }
 
-    console.log(`                Got old messages (${allMessages.length})`);
-    return allMessages;
+    console.log(`                Got old messages (${ALL_MESSAGES.length})`);
+    return ALL_MESSAGES;
+  }
+
+  /**
+   * This function returns the server to which the room belongs.
+   * @param {*} channel - Channel.
+   * @returns Server who owns the chat room.
+   */
+  _getChannelServer(channel) {
+    if (!channel) {
+      console.error(
+        "Error: Unable to retrieve server. Channel parameter is null or undefined."
+      );
+      return null;
+    }
+
+    try {
+      return this.client.guilds.cache.get(channel.guild.id) || null;
+    } catch (e) {
+      console.error(
+        `Error: Unable to retrieve server for channel "${
+          channel.name || channel.id
+        }".`,
+        e
+      );
+      return null;
+    }
   }
 
   //#endregion
@@ -132,7 +202,7 @@ class Discord {
     );
   }
 
-  async _sendImageToTmpServer(channel, weaponName, weaponDate, imagePath) {
+  async sendImageToTmpServer(channel, weaponName, weaponDate, imagePath) {
     const DATE_STRING = this.dateFormat(weaponDate);
     const MESSAGE = weaponName + "\n" + DATE_STRING;
     const NEW_MESSAGE = await this.sendMessage(
@@ -148,30 +218,75 @@ class Discord {
   }
 
   /**
-   * Cette fonction permet d'envoyer un message dans un salon.
-   * @param {*} channel Salon où envoyer le message.
-   * @param {*} content Contenu du message à envoyer dans le salon.
-   * @param {*} embed Embed lié au message à envoyer dans le salon.
-   * @param {*} file Fichier lié au message à envoyer dans le salon.
-   * @param {*} callback (optionnel) Fonction de retour, indiquant ou non un succès.
+   * This function allows you to send a message in a chat room.
+   * @param {*} channel - Message room where you can send your message.
+   * @param {*} content - Content of the message to be sent in the chat room.
+   * @param {*} embed - Embed linked to the message to be sent in the chat room.
+   * @param {*} file - (Optional) File linked to the message to be sent in the chat room.
+   * @param {Object} interaction - (Optional) The Discord message that the application received.
    */
-  async sendMessage(channel, content, embed, file) {
+  async sendMessage(channel, content, embed, file, interaction) {
+    if (!channel) {
+      console.error(
+        "        Error: Unable to send message. Channel parameter is null or undefined."
+      );
+      return undefined;
+    }
+
     let message = undefined;
     try {
+      const PERMISSIONS = channel.permissionsFor(this.client.user);
+
+      if (!PERMISSIONS) {
+        console.error(
+          `        Error: Unable to check permissions in channel: ${
+            channel.name || channel.id
+          }`
+        );
+        return undefined;
+      }
+
+      if (!PERMISSIONS.has(PermissionFlagsBits.SendMessages)) {
+        const CHANNEL_NAME = channel.name || channel.id || "Unknown";
+        console.error(
+          `        Error: Bot lacks SendMessages permission in channel: ${CHANNEL_NAME}`
+        );
+        if (interaction) {
+          interaction.followUp({
+            content: `Error: Permission "Send Messages" is missing in channel "${CHANNEL_NAME}"!`,
+            flags: 64, // MessageFlags.Ephemeral.
+          });
+        }
+        return undefined;
+      }
+
+      if (file && !PERMISSIONS.has(PermissionFlagsBits.AttachFiles)) {
+        const CHANNEL_NAME = channel.name || channel.id || "Unknown";
+        console.error(
+          `        Error: Bot lacks AttachFiles permission in channel: ${CHANNEL_NAME}`
+        );
+        if (interaction) {
+          interaction.followUp({
+            content: `Error: Permission "Attach Files" is missing in channel "${CHANNEL_NAME}"!`,
+            flags: 64, // MessageFlags.Ephemeral.
+          });
+        }
+        return undefined;
+      }
+
       message = await channel.send({
         content: content,
         embeds: embed ? [embed] : undefined,
-        files: file ? [file] : file,
+        files: file ? [file] : undefined,
       });
     } catch (e) {
+      const SERVER = this._getChannelServer(channel);
+      const SERVER_NAME = SERVER?.name || "Unknown";
+      const CHANNEL_NAME = channel.name || channel.id || "Unknown";
+
       console.error(
-        `        Impossible d'envoyer un message (Server: "${
-          this._getChannelServer(channel).name
-        }", channel: "${channel.name}").`,
-        e,
-        content,
-        embed,
-        file
+        `        Error: Unable to send message in channel "${CHANNEL_NAME}" (Server: "${SERVER_NAME}").`,
+        e
       );
     }
     return message;
@@ -185,18 +300,63 @@ class Discord {
    * @param {Function} [callback] - Optional callback function to execute with success/failure status.
    */
   async deleteMessage(message, callback) {
+    if (!message) {
+      console.error(
+        "Error: Unable to delete message. Message parameter is null or undefined."
+      );
+      if (callback) {
+        callback(false);
+      }
+      return;
+    }
+
     try {
+      const CHANNEL = message.channel;
+      if (CHANNEL) {
+        const permissions = CHANNEL.permissionsFor(this.client.user);
+
+        if (!permissions) {
+          console.error(
+            `Error: Unable to check permissions for message deletion in channel: ${
+              CHANNEL.name || CHANNEL.id
+            }`
+          );
+          if (callback) {
+            callback(false);
+          }
+          return;
+        }
+
+        const isOwnMessage = message.author?.id === this.client.user.id;
+        if (
+          !isOwnMessage &&
+          !permissions.has(PermissionFlagsBits.ManageMessages)
+        ) {
+          console.error(
+            `Error: Bot lacks ManageMessages permission in channel: ${
+              CHANNEL.name || CHANNEL.id
+            }`
+          );
+          if (callback) {
+            callback(false);
+          }
+          return;
+        }
+      }
+
       await message.delete();
       if (callback) {
         callback(true);
       }
     } catch (e) {
-      const SERVER = this._getServers().find((x) => x.id == message.guildId);
-      const CHANNEL = this._getServerChannels(SERVER).find(
-        (x) => x.id == message.channelId
-      );
+      const CHANNEL = message.channel;
+      const SERVER = CHANNEL?.guild;
+
+      const SERVER_NAME = SERVER?.name || "Unknown";
+      const CHANNEL_NAME = CHANNEL?.name || CHANNEL?.id || "Unknown";
+
       console.error(
-        `        Unable to delete the message (Server: "${SERVER.name}", channel: "${CHANNEL.name}").`,
+        `        Unable to delete the message (Server: "${SERVER_NAME}", channel: "${CHANNEL_NAME}").`,
         e
       );
       if (callback) {
@@ -206,13 +366,13 @@ class Discord {
   }
 
   /**
-   * Delete old weapon messages that don't match the current date.
+   * Delete old dev messages that don't match the current date.
    * @param {Array} oldMessages - Array of old Discord messages to filter through.
    * @param {string} weaponName - The name of the weapon.
    * @param {string} weaponDate - The date of the weapon.
    * @returns {Promise<boolean>} Returns true if a new message can be created, false otherwise.
    */
-  async deleteWeaponMessage(oldMessages, weaponName, weaponDate) {
+  async deleteDevMessage(oldMessages, weaponName, weaponDate) {
     const A_WEAPON_OLD_MESSAGES = oldMessages.filter((message) =>
       message.content.startsWith(weaponName + "\n")
     );
@@ -234,24 +394,61 @@ class Discord {
 
   /**
    * Create a new Discord channel in a server.
-   * @param {Object} server - The Discord server object.
+   * @param {Object} interaction - The Discord message that the application received.
    * @param {string} name - The name of the channel to create.
    * @param {string} topic - The topic/description of the channel.
    * @param {Function} [callback] - Optional callback function to execute with the created channel.
    */
-  async createChannel(server, name, topic, callback) {
+  async createChannel(interaction, name, topic, callback) {
     try {
-      const SERVER = await server.channels.create({
+      const BOT_MEMBER = interaction.guild.members.cache.get(
+        this.client.user.id
+      );
+
+      if (!BOT_MEMBER) {
+        console.error(
+          `Error: Bot is not a member of server: ${
+            interaction.guild.name || interaction.guild.id
+          }`
+        );
+        if (callback) {
+          callback(null);
+        }
+        return;
+      }
+
+      if (!BOT_MEMBER.permissions.has(PermissionFlagsBits.ManageChannels)) {
+        const SERVER_NAME =
+          interaction.guild?.name || interaction.guild?.id || "Unknown";
+        console.error(
+          `Error: Bot lacks ManageChannels permission in server: ${SERVER_NAME}`
+        );
+        interaction.followUp({
+          content: `Error: Permission "Manage Channels" is missing in server ${SERVER_NAME}!`,
+          flags: 64, // MessageFlags.Ephemeral.
+        });
+        if (callback) {
+          callback(null);
+        }
+        return;
+      }
+
+      const CHANNEL = await interaction.guild.channels.create({
         name: name,
         topic: topic,
         type: ChannelType.GuildText,
         permissionOverwrites: [
           {
             id: this.client.user.id, // Bot permissions
-            allow: [PermissionFlagsBits.SendMessages],
+            allow: [
+              PermissionFlagsBits.ViewChannel,
+              PermissionFlagsBits.SendMessages,
+              PermissionFlagsBits.ReadMessageHistory,
+              PermissionFlagsBits.AttachFiles,
+            ],
           },
           {
-            id: server.roles.everyone.id, // @everyone
+            id: interaction.guild.roles.everyone.id, // @everyone
             deny: [
               PermissionFlagsBits.SendMessages,
               PermissionFlagsBits.CreatePublicThreads,
@@ -262,19 +459,24 @@ class Discord {
         ],
       });
       if (callback) {
-        callback(SERVER);
+        callback(CHANNEL);
       }
     } catch (e) {
+      const SERVER_NAME =
+        interaction.guild?.name || interaction.guild?.id || "Unknown";
       console.error(
-        `        Unable to create the room on the server "${server.name}".`,
+        `        Unable to create the room on the server "${SERVER_NAME}".`,
         e
       );
+      if (callback) {
+        callback(null);
+      }
     }
   }
 
   /**
    * This function allows for waiting.
-   * @param {*} time Time in milliseconds.
+   * @param {*} time - Time in milliseconds.
    */
   async _delay(time) {
     return new Promise(function (resolve) {

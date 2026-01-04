@@ -173,9 +173,9 @@ function checkDataFromAPI(callback) {
 async function refreshServer(interaction) {
   const SERVER_ID = interaction.options.getString("server_id");
 
-  const SERVER = DISCORD._getServers().find((server) => server.id == SERVER_ID);
+  const SERVER = DISCORD.getServers().find((server) => server.id == SERVER_ID);
   if (SERVER) {
-    const CHANNELS = DISCORD._getServerChannels(SERVER).filter(
+    const CHANNELS = DISCORD.getServerChannels(SERVER).filter(
       (channel) => channel.topic && channel.topic.includes("#EBP_")
     );
     if (CHANNELS.length > 0) {
@@ -220,11 +220,11 @@ async function refreshChannel(interaction) {
   const SERVER_ID_TO_REFRESH = interaction.options.getString("server_id");
   const CHANNEL_ID_TO_REFRESH = interaction.options.getString("channel_id");
 
-  const SERVER_TO_REFRESH = DISCORD._getServers().find(
+  const SERVER_TO_REFRESH = DISCORD.getServers().find(
     (server) => server.id == SERVER_ID_TO_REFRESH
   );
   if (SERVER_TO_REFRESH) {
-    const CHANNELS = DISCORD._getServerChannels(SERVER_TO_REFRESH).filter(
+    const CHANNELS = DISCORD.getServerChannels(SERVER_TO_REFRESH).filter(
       (channel) => channel.id == CHANNEL_ID_TO_REFRESH
     );
     if (CHANNELS.length == 1) {
@@ -239,24 +239,28 @@ async function refreshChannel(interaction) {
         weapons,
         weaponsUrls,
         i18n,
+        interaction,
         () => {
           MODE_MANAGER.refreshChannel(
             CHANNELS[0],
             modes,
             modesUrls,
             i18n,
+            interaction,
             () => {
               MAP_MANAGER.refreshChannel(
                 CHANNELS[0],
                 maps,
                 mapsUrls,
                 i18n,
+                interaction,
                 () => {
                   HERO_MANAGER.refreshChannel(
                     CHANNELS[0],
                     heroes,
                     heroesUrls,
                     i18n,
+                    interaction,
                     () => {
                       interaction.followUp({
                         content: "Refreshed!",
@@ -293,7 +297,7 @@ async function loop() {
   console.log("Loop start...");
   checkDataFromAPI(() => {
     // We're looping through the Discord servers using the bot.
-    const SERVERS = DISCORD._getServers();
+    const SERVERS = DISCORD.getServers();
     console.log(`    There are "${SERVERS.length}" servers using this bot.`);
     for (const SERVER of SERVERS) {
       if (!DEV_MODE || (DEV_MODE && SERVER.name == "EBP - EVA Battle Plan")) {
@@ -323,7 +327,7 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
         return;
       }
 
-      const SERVER = DISCORD._getServers().find(
+      const SERVER = DISCORD.getServers().find(
         (x) => x.id == interaction.guildId
       );
 
@@ -337,10 +341,22 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
           flags: 64, // MessageFlags.Ephemeral.
         });
 
-        WEAPON_MANAGER.refreshServer(SERVER, weapons, weaponsUrls, i18n);
-        MODE_MANAGER.refreshServer(SERVER, modes, modesUrls, i18n);
-        MAP_MANAGER.refreshServer(SERVER, maps, mapsUrls, i18n);
-        HERO_MANAGER.refreshServer(SERVER, heroes, heroesUrls, i18n);
+        WEAPON_MANAGER.refreshServer(
+          SERVER,
+          weapons,
+          weaponsUrls,
+          i18n,
+          interaction
+        );
+        MODE_MANAGER.refreshServer(SERVER, modes, modesUrls, i18n, interaction);
+        MAP_MANAGER.refreshServer(SERVER, maps, mapsUrls, i18n, interaction);
+        HERO_MANAGER.refreshServer(
+          SERVER,
+          heroes,
+          heroesUrls,
+          i18n,
+          interaction
+        );
       } else {
         await interaction.reply({
           content: "Error: Server not found.",
@@ -358,6 +374,11 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
         });
         return;
       }
+
+      await interaction.reply({
+        content: "Creating your channel...",
+        flags: 64, // MessageFlags.Ephemeral.
+      });
 
       const MODE = interaction.options.getString("mode");
       const LANGUAGE = interaction.options.getString("language");
@@ -379,46 +400,52 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
       }
 
       DISCORD.createChannel(
-        interaction.guild,
+        interaction,
         `${emoji}${i18n(MODE, LANGUAGE)}`,
         `#EBP_${MODE.toUpperCase()}_BOT(${LANGUAGE})`,
         async (channel) => {
-          WEAPON_MANAGER.refreshChannel(
-            channel,
-            weapons,
-            weaponsUrls,
-            i18n,
-            () => {
-              MODE_MANAGER.refreshChannel(
-                channel,
-                modes,
-                modesUrls,
-                i18n,
-                () => {
-                  MAP_MANAGER.refreshChannel(
-                    channel,
-                    maps,
-                    mapsUrls,
-                    i18n,
-                    () => {
-                      HERO_MANAGER.refreshChannel(
-                        channel,
-                        heroes,
-                        heroesUrls,
-                        i18n,
-                        () => {
-                          interaction.reply({
-                            content: `Salon created : ${channel.name}`,
-                            flags: 64, // MessageFlags.Ephemeral.
-                          });
-                        }
-                      );
-                    }
-                  );
-                }
-              );
-            }
-          );
+          if (channel) {
+            WEAPON_MANAGER.refreshChannel(
+              channel,
+              weapons,
+              weaponsUrls,
+              i18n,
+              interaction,
+              () => {
+                MODE_MANAGER.refreshChannel(
+                  channel,
+                  modes,
+                  modesUrls,
+                  i18n,
+                  interaction,
+                  () => {
+                    MAP_MANAGER.refreshChannel(
+                      channel,
+                      maps,
+                      mapsUrls,
+                      i18n,
+                      interaction,
+                      () => {
+                        HERO_MANAGER.refreshChannel(
+                          channel,
+                          heroes,
+                          heroesUrls,
+                          i18n,
+                          interaction,
+                          () => {
+                            interaction.followUp({
+                              content: `Your channel has been successfully created : ${channel.name}`,
+                              flags: 64, // MessageFlags.Ephemeral.
+                            });
+                          }
+                        );
+                      }
+                    );
+                  }
+                );
+              }
+            );
+          }
         }
       );
 
@@ -447,6 +474,7 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
         interaction.channel,
         weapons,
         weaponsUrls,
+        interaction,
         i18n,
         () => {
           MODE_MANAGER.refreshChannel(
@@ -454,18 +482,21 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
             modes,
             modesUrls,
             i18n,
+            interaction,
             () => {
               MAP_MANAGER.refreshChannel(
                 interaction.channel,
                 maps,
                 mapsUrls,
                 i18n,
+                interaction,
                 () => {
                   HERO_MANAGER.refreshChannel(
                     interaction.channel,
                     heroes,
                     heroesUrls,
                     i18n,
+                    interaction,
                     () => {
                       interaction.followUp({
                         content: "Refreshed!",
@@ -491,7 +522,7 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
         return;
       }
 
-      const SERVERS = DISCORD._getServers().map(
+      const SERVERS = DISCORD.getServers().map(
         (server) => server.name + " (" + server.id + ")"
       );
 
@@ -621,7 +652,7 @@ DISCORD.client.on("interactionCreate", async (interaction) => {
       }
 
       const TARGET_SERVER_ID = interaction.options.getString("server_id");
-      const TARGET_SERVER = DISCORD._getServers().find(
+      const TARGET_SERVER = DISCORD.getServers().find(
         (server) => server.id == TARGET_SERVER_ID
       );
 
