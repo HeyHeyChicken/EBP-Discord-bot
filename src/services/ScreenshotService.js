@@ -133,6 +133,7 @@ class ScreenshotService {
         (OLD_DEV_MESSAGE &&
           OLD_DEV_MESSAGE.content.split("\n").at(-1) !== FORMATTED_DATE)
       ) {
+        console.log("4 - We have to download the image...");
         console.log(
           `        (${("0" + (i + 1)).slice(-2)}/${("0" + urls.length).slice(
             -2
@@ -180,6 +181,7 @@ class ScreenshotService {
         OLD_DEV_MESSAGE &&
         OLD_DEV_MESSAGE.content.split("\n").at(-1) === FORMATTED_DATE
       ) {
+        console.log("4 - We don't have to download the image.");
         // Use the existing image.
         if (OLD_DEV_MESSAGE.attachments.first()) {
           await database.setImage(
