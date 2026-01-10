@@ -38,7 +38,7 @@ RUN npm install --production
 COPY . .
 
 # Create data directory for database persistence
-RUN mkdir -p /app/data
+RUN mkdir -p /app/data && chmod -R 777 /app/data
 
 # Start the application.
 CMD ["node", "src/index.js"]
