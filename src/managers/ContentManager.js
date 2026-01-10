@@ -31,8 +31,6 @@ class ContentManager {
     this.screenshotsFolder = PATH.join(
       __dirname,
       "..",
-      "..",
-      "data",
       "screenshots",
       contentType
     );
