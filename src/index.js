@@ -8,7 +8,6 @@ const AXIOS = require("axios"); // This library allows me to query the REST API 
 const PATH = require("path"); // This library allows me to create OS-related access paths.
 const HTTP = require("http");
 const FS = require("fs");
-const Settings = require("./settings");
 const Discord = require("./discord");
 const DatabaseService = require("./services/DatabaseService");
 const ScreenshotService = require("./services/ScreenshotService");
@@ -17,6 +16,8 @@ const HeroManager = require("././managers/HeroManager");
 const MapManager = require("././managers/MapManager");
 const ModeManager = require("././managers/ModeManager");
 const WeaponManager = require("././managers/WeaponManager");
+
+require("dotenv").config();
 
 //#endregion
 
@@ -38,7 +39,6 @@ let mapsUrls; // The list of URLs for the "Maps" page will be stored here.
 let heroes; // The list of maps from the API will be stored here.
 let heroesUrls; // The list of URLs for the "Maps" page will be stored here.
 
-const SETTINGS = new Settings();
 const DISCORD = new Discord(DEV_MODE);
 const DATABASE = new DatabaseService(API_URL);
 const SCREENSHOT_SERVICE = new ScreenshotService();
@@ -712,4 +712,4 @@ DISCORD.client.once("clientReady", async () => {
   });
 });
 
-DISCORD.client.login(SETTINGS.settings.discord_bot_token);
+DISCORD.client.login(process.env.DISCORD_BOT_TOKEN);

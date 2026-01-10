@@ -5,7 +5,7 @@
 //#region Attributes
 
 const { REST, Routes } = require("discord.js");
-const Settings = require("./settings");
+require("dotenv").config();
 
 //#endregion
 
@@ -114,9 +114,8 @@ const COMMANDS = [
   },
 ];
 
-const SETTINGS = new Settings();
 const DISCORD_REST = new REST({ version: "10" }).setToken(
-  SETTINGS.settings.discord_bot_token
+  process.env.DISCORD_BOT_TOKEN
 );
 
 // Déploiement global (fonctionne sur tous les serveurs)
@@ -124,9 +123,12 @@ const DISCORD_REST = new REST({ version: "10" }).setToken(
   try {
     console.log("Refreshing of slash commands has begun...");
 
-    await DISCORD_REST.put(Routes.applicationCommands("1295696799839031318"), {
-      body: COMMANDS,
-    });
+    await DISCORD_REST.put(
+      Routes.applicationCommands(process.env.DISCORD_BOT_ID),
+      {
+        body: COMMANDS,
+      }
+    );
 
     console.log("Slash commands successfully reloaded!");
   } catch (error) {

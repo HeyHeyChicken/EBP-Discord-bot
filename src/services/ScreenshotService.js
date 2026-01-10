@@ -6,6 +6,7 @@
 
 const PUPPETEER = require("puppeteer");
 const PATH = require("path");
+require("dotenv").config();
 
 //#endregion
 
@@ -85,7 +86,7 @@ class ScreenshotService {
   ) {
     const DISCORD_SERVER = discord
       .getServers()
-      .find((server) => server.id == discord.ebpServerId);
+      .find((server) => server.id == process.env.DISCORD_SERVER_ID);
 
     if (!DISCORD_SERVER) {
       console.error("Discord server not found for screenshots upload");
@@ -94,7 +95,7 @@ class ScreenshotService {
 
     const DISCORD_CHANNEL = discord
       .getServerChannels(DISCORD_SERVER)
-      .find((channel) => channel.id == discord.ebpDevChannelId);
+      .find((channel) => channel.id == process.env.DISCORD_IMAGE_CHANNEL_ID);
 
     if (!DISCORD_CHANNEL) {
       console.error("Discord channel not found for screenshots upload");
