@@ -18,9 +18,6 @@ const {
  */
 class Discord {
   constructor(devMode) {
-    this.ebpServerId = 1113942572818255992; /* EBP server ID */
-    this.ebpDevChannelId = 1296730928588132394; /* ID of the chat room dedicated to uploading images. */
-
     this._devMode = devMode;
     this.client = new Client({
       intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],

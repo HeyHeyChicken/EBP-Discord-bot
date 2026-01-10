@@ -31,11 +31,14 @@ WORKDIR /app
 # Copy package files first for better Docker layer caching
 COPY package*.json ./
 
-# Install dependencies
+# Install dependencies (without dev dependencies)
 RUN npm install --production
 
 # Copy the rest of the application
 COPY . .
+
+# Create data directory for database persistence
+RUN mkdir -p /app/data
 
 # Start the application.
 CMD ["node", "src/index.js"]

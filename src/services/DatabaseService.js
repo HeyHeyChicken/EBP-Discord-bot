@@ -15,7 +15,7 @@ const AXIOS = require("axios");
 class DatabaseService {
   constructor(apiURL) {
     this._apiURL = apiURL;
-    this.db = new SQL_LITE.Database("./database.db");
+    this.db = new SQL_LITE.Database("./data/database.db");
 
     this._initializeTables();
   }

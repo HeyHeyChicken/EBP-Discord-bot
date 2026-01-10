@@ -39,21 +39,20 @@ jobs:
           tags: ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/ebp-discord-bot:latest
           cache-from: type=registry,ref=ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/ebp-discord-bot:buildcache
           cache-to: type=registry,ref=ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/ebp-discord-bot:buildcache,mode=max
-#      - name: Connect to Tailscale
-#        uses: tailscale/github-action@v3
-#        with:
-#          oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
-#          oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
-#          tags: tag:ci
-
-#      - name: Deploy to VPS
-#        uses: appleboy/ssh-action@v1.0.0
-#        with:
-#          host: ${{ secrets.VPS_HOST }}
-#          username: ${{ secrets.VPS_USERNAME }}
-#          key: ${{ secrets.VPS_SSH_KEY }}
-#          script: |
-#            cd /opt/ebp-discord-bot
-#            docker compose pull
-#            docker compose up -d --force-recreate
-#            docker image prune -f
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+          tags: tag:ci
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /var/www/ebp-discord-bot
+            docker compose pull
+            docker compose up -d --force-recreate
+            docker image prune -f

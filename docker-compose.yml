@@ -1,10 +1,18 @@
 services:
   app:
+    image: ghcr.io/heyheychicken/ebp-discord-bot:latest
     restart: unless-stopped
-    build:
-      context: .
-      dockerfile: Dockerfile
+    env_file:
+      - .env
     ports:
-      - "84:3000"
+      - "3002:3000"
+    volumes:
+      # Persist the database
+      - ./data:/app/data
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
