@@ -81,6 +81,7 @@ class ContentManager {
     console.log(`        Downloading ${this._contentType} screenshots...`);
 
     const URLS = this.prepareUrls(items, baseUrls);
+    console.log("URLS", URLS);
     await this._screenshotService.downloadScreenshots(
       items,
       URLS,
