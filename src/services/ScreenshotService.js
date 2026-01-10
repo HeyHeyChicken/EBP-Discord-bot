@@ -98,8 +98,11 @@ class ScreenshotService {
 
     const OLD_DEV_MESSAGES = await discord.getOldMessages(DISCORD_CHANNEL, 400);
 
+    console.log("1 - Initializing browser...");
     await this.initBrowser(width, height);
+    console.log("2 - Browser initialized.");
 
+    console.log("3 - Exploring URLS (" + urls.length + ")...");
     for (let i = 0; i < urls.length; i++) {
       const [filePath, url] = urls[i];
 
