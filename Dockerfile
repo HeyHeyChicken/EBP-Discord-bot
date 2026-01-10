@@ -28,8 +28,13 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 # Create an application directory.
 WORKDIR /app
 
+# Copy package files first for better Docker layer caching
+COPY package*.json ./
+
+# Install dependencies
 RUN npm install --production
 
+# Copy the rest of the application
 COPY . .
 
 # Start the application.
