@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to Hetzner VPS
+    name: Deploy to VPS
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -27,14 +27,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set lowercase repository owner
+        id: repo_owner
+        run: echo "lowercase=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_OUTPUT
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/ebp-discord-bot:latest
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/ebp-discord-bot:buildcache
-          cache-to: type=registry,ref=ghcr.io/${{ github.repository_owner }}/ebp-discord-bot:buildcache,mode=max
+          tags: ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/ebp-discord-bot:latest
+          cache-from: type=registry,ref=ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/ebp-discord-bot:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/ebp-discord-bot:buildcache,mode=max
 #      - name: Connect to Tailscale
 #        uses: tailscale/github-action@v3
 #        with:
