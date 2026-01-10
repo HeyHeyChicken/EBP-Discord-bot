@@ -37,7 +37,8 @@ jobs:
           context: .
           push: true
           tags: ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/ebp-discord-bot:latest
-          no-cache: true
+          cache-from: type=registry,ref=ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/ebp-discord-bot:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ steps.repo_owner.outputs.lowercase }}/ebp-discord-bot:buildcache,mode=max
 #      - name: Connect to Tailscale
 #        uses: tailscale/github-action@v3
 #        with:
